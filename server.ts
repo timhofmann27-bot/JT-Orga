@@ -2,8 +2,8 @@ import express from 'express';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import cookieParser from 'cookie-parser';
-import { db } from './src/db/index.js';
-import { apiRouter } from './src/api/index.js';
+import { db } from './src/db/index.ts';
+import { apiRouter } from './src/api/index.ts';
 
 async function startServer() {
   const app = express();
