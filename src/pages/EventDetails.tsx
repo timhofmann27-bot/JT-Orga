@@ -132,8 +132,8 @@ export default function EventDetails() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white p-4 rounded-xl border border-gray-200 text-center">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
+        <div className="bg-white p-4 rounded-xl border border-gray-200 text-center col-span-2 sm:col-span-1">
           <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
           <div className="text-xs text-gray-500 uppercase tracking-wider font-medium mt-1">Eingeladen</div>
         </div>
@@ -178,11 +178,11 @@ export default function EventDetails() {
         </div>
 
         <div className="p-4 bg-gray-50 border-b border-gray-200">
-          <form onSubmit={handleAddInvitee} className="flex flex-col sm:flex-row gap-2">
+          <form onSubmit={handleAddInvitee} className="flex flex-col sm:flex-row gap-3">
             <select
               value={selectedPersonId}
               onChange={e => setSelectedPersonId(e.target.value)}
-              className="flex-1 border border-gray-300 rounded-md p-2 text-sm bg-white"
+              className="flex-1 border border-gray-300 rounded-md p-3 sm:p-2 text-sm bg-white"
             >
               <option value="">Person auswählen...</option>
               {availablePersons.map(p => (
@@ -192,7 +192,7 @@ export default function EventDetails() {
             <button 
               type="submit" 
               disabled={!selectedPersonId}
-              className="bg-gray-900 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full sm:w-auto bg-gray-900 text-white px-4 py-3 sm:py-2 rounded-md text-sm font-medium hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               <Plus className="w-4 h-4" />
               Einladen

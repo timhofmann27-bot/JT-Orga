@@ -3,10 +3,8 @@ services:
     build: .
     volumes:
       - ./data:/app/data
-    environment:
-      - NODE_ENV=production
-      - ADMIN_PASSWORD=admin123
-      - JWT_SECRET=change_me_in_production_to_something_long_and_random
+    env_file:
+      - .env
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.jtorga.rule=Host(`jt-orga.pro`) || Host(`www.jt-orga.pro`)"

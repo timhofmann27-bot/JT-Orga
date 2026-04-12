@@ -79,14 +79,14 @@ export default function Persons() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
           <Users className="w-6 h-6 text-gray-900" />
           Personen
         </h1>
         <button
           onClick={openNew}
-          className="flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-black transition-colors text-sm font-medium"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-black transition-colors text-sm font-medium"
         >
           <Plus className="w-4 h-4" />
           Person anlegen
@@ -151,9 +151,9 @@ export default function Persons() {
                   rows={3}
                 ></textarea>
               </div>
-              <div className="flex gap-3 pt-4">
-                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">Abbrechen</button>
-                <button type="submit" className="flex-1 px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-black">Speichern</button>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button type="button" onClick={() => setShowModal(false)} className="w-full sm:flex-1 px-4 py-3 sm:py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">Abbrechen</button>
+                <button type="submit" className="w-full sm:flex-1 px-4 py-3 sm:py-2 bg-gray-900 text-white rounded-md hover:bg-black font-medium">Speichern</button>
               </div>
             </form>
           </div>

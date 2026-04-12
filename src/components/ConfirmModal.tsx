@@ -31,16 +31,16 @@ export default function ConfirmModal({ isOpen, title, message, onConfirm, onCanc
         
         <p className="text-gray-600 text-sm mb-8">{message}</p>
         
-        <div className="flex gap-3 justify-end">
+        <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
           <button 
             onClick={onCancel} 
-            className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
+            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
           >
             Abbrechen
           </button>
           <button 
             onClick={onConfirm} 
-            className="px-5 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
+            className="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors"
           >
             Bestätigen
           </button>
