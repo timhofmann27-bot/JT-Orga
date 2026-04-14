@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, Users } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, Users, Lock, Mail, ArrowRight, User } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -14,6 +14,11 @@ export default function PublicInvite() {
   const [status, setStatus] = useState('');
   const [comment, setComment] = useState('');
   const [guestsCount, setGuestsCount] = useState(0);
+
+  // Profile setup state
+  const [setupEmail, setSetupEmail] = useState('');
+  const [setupPassword, setSetupPassword] = useState('');
+  const [isSettingUp, setIsSettingUp] = useState(false);
 
   useEffect(() => {
     fetch(`/api/public/invite/${token}`)
@@ -55,6 +60,33 @@ export default function PublicInvite() {
     }
   };
 
+  const handleSetupProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSettingUp(true);
+    try {
+      const res = await fetch(`/api/public/invite/${token}/setup-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: setupEmail, password: setupPassword })
+      });
+
+      if (res.ok) {
+        toast.success('Profil erfolgreich erstellt!');
+        // Refresh data to show profile is created
+        const updatedData = { ...data };
+        updatedData.invitee.has_profile = true;
+        setData(updatedData);
+      } else {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Erstellen des Profils.');
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setIsSettingUp(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -77,7 +109,7 @@ export default function PublicInvite() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center max-w-md w-full animate-in fade-in zoom-in duration-300">
           <CheckCircle className="w-16 h-16 text-gray-900 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Vielen Dank, {invitee.name}!</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Vielen Dank, {invitee.name_snapshot || invitee.name}!</h1>
           <p className="text-gray-600 mb-6">Deine Antwort wurde erfolgreich gespeichert.</p>
           <div className="bg-gray-50 p-4 rounded-lg text-left text-sm text-gray-600">
             <p className="font-medium text-gray-900 mb-1">Deine aktuelle Antwort:</p>
@@ -88,12 +120,21 @@ export default function PublicInvite() {
             </p>
             {guestsCount > 0 && <p className="mt-1">👥 + {guestsCount} Begleitperson(en)</p>}
           </div>
-          <button 
-            onClick={() => setSuccess(false)}
-            className="mt-6 text-gray-900 font-medium hover:underline text-sm"
-          >
-            Antwort noch einmal ändern
-          </button>
+          
+          <div className="flex flex-col gap-3 mt-8">
+            <Link 
+              to="/dashboard"
+              className="bg-gray-900 text-white font-bold py-3 px-4 rounded-xl hover:bg-black transition-colors flex items-center justify-center gap-2"
+            >
+              Zum Dashboard <ArrowRight className="w-4 h-4" />
+            </Link>
+            <button 
+              onClick={() => setSuccess(false)}
+              className="text-gray-500 hover:text-gray-900 text-sm font-medium"
+            >
+              Antwort noch einmal ändern
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -102,6 +143,7 @@ export default function PublicInvite() {
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6">
       <div className="max-w-xl mx-auto">
+        {/* Header / Event Info */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
           <div className="bg-gray-900 p-6 text-white text-center">
             <h1 className="text-2xl font-bold mb-2">{event.title}</h1>
@@ -138,7 +180,8 @@ export default function PublicInvite() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+        {/* Response Form */}
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Deine Antwort</h2>
           
           {isDeadlinePassed && (
@@ -220,6 +263,76 @@ export default function PublicInvite() {
             </button>
           )}
         </form>
+
+        {/* Profile Setup / Dashboard Link */}
+        {!invitee.has_profile ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 animate-in slide-in-from-bottom-4 duration-500">
+            <h2 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Profil erstellen
+            </h2>
+            <p className="text-sm text-gray-500 mb-6">
+              Erstelle ein Profil, um alle deine Einladungen an einem Ort zu sehen und deine Antworten jederzeit zu ändern.
+            </p>
+            
+            <form onSubmit={handleSetupProfile} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">E-Mail Adresse</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="email" 
+                    required 
+                    value={setupEmail}
+                    onChange={e => setSetupEmail(e.target.value)}
+                    placeholder="deine@email.de"
+                    className="w-full border border-gray-300 rounded-xl p-3 pl-10 text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Passwort wählen</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input 
+                    type="password" 
+                    required 
+                    minLength={8}
+                    value={setupPassword}
+                    onChange={e => setSetupPassword(e.target.value)}
+                    placeholder="Mind. 8 Zeichen"
+                    className="w-full border border-gray-300 rounded-xl p-3 pl-10 text-sm focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <button 
+                type="submit"
+                disabled={isSettingUp}
+                className="w-full bg-gray-100 text-gray-900 font-bold py-3 px-4 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                {isSettingUp ? 'Wird erstellt...' : 'Profil jetzt erstellen'}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <div className="font-bold text-gray-900">Profil aktiv</div>
+                <div className="text-sm text-gray-500">Du kannst dich jederzeit einloggen.</div>
+              </div>
+            </div>
+            <Link 
+              to="/dashboard"
+              className="text-gray-900 font-bold text-sm hover:underline flex items-center gap-1"
+            >
+              Dashboard <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

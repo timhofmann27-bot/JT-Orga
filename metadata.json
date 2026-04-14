@@ -1,5 +1,5 @@
 {
-  "name": "JT-ORGA-BASE",
-  "description": "",
+  "name": "J-gert Planer",
+  "description": "Ein Event-Planer mit Admin-Dashboard und Teilnehmer-Login.",
   "requestFramePermissions": []
 }

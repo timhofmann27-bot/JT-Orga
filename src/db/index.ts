@@ -25,6 +25,8 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS persons (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    email TEXT UNIQUE,
+    password_hash TEXT,
     notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -55,15 +57,41 @@ db.exec(`
     FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE SET NULL,
     UNIQUE(event_id, person_id)
   );
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_type TEXT NOT NULL,
+    user_id INTEGER,
+    title TEXT NOT NULL,
+    message TEXT NOT NULL,
+    link TEXT,
+    is_read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Add meeting_point column if it doesn't exist (migration)
 try {
   db.exec('ALTER TABLE events ADD COLUMN meeting_point TEXT');
 } catch (e: any) {
-  // Ignore error if column already exists
   if (!e.message.includes('duplicate column name')) {
     console.error('Error adding meeting_point column:', e);
+  }
+}
+
+// Add email and password_hash to persons (migration)
+try {
+  db.exec('ALTER TABLE persons ADD COLUMN email TEXT UNIQUE');
+} catch (e: any) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('Error adding email column:', e);
+  }
+}
+
+try {
+  db.exec('ALTER TABLE persons ADD COLUMN password_hash TEXT');
+} catch (e: any) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('Error adding password_hash column:', e);
   }
 }
 

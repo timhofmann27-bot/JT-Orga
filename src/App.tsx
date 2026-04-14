@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import AdminLayout from './components/AdminLayout';
 import Login from './pages/Login';
+import PersonLogin from './pages/PersonLogin';
+import PersonDashboard from './pages/PersonDashboard';
 import Dashboard from './pages/Dashboard';
 import EventDetails from './pages/EventDetails';
 import Persons from './pages/Persons';
@@ -18,7 +20,9 @@ export default function App() {
     <BrowserRouter>
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<Login />} />
+        <Route path="/login" element={<PersonLogin />} />
+        <Route path="/dashboard" element={<PersonDashboard />} />
         <Route path="/invite/:token" element={<PublicInvite />} />
         
         <Route path="/" element={<AdminLayout />}>

@@ -29,6 +29,19 @@ const requireAuth = (req: any, res: any, next: any) => {
   }
 };
 
+const requirePersonAuth = (req: any, res: any, next: any) => {
+  const token = req.cookies.person_token;
+  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET) as any;
+    if (decoded.type !== 'person') throw new Error('Not a person token');
+    req.person = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
 // --- RATE LIMITING ---
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -62,6 +75,10 @@ const inviteSchema = z.object({
   person_id: z.number()
 });
 
+const bulkInviteSchema = z.object({
+  person_ids: z.array(z.number())
+});
+
 const respondSchema = z.object({
   status: z.enum(['yes', 'no', 'maybe']),
   comment: z.string().optional().nullable(),
@@ -72,6 +89,11 @@ const settingsSchema = z.object({
   username: z.string().min(1, 'Benutzername ist erforderlich'),
   currentPassword: z.string().optional(),
   newPassword: z.string().optional()
+});
+
+const setupProfileSchema = z.object({
+  email: z.string().email('Ungültige E-Mail Adresse'),
+  password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen lang sein')
 });
 
 // --- AUTH ROUTES ---
@@ -165,6 +187,14 @@ adminRouter.post('/events/:id/invites', (req, res) => {
     const token = crypto.randomBytes(16).toString('hex');
     const stmt = db.prepare('INSERT INTO invitees (event_id, person_id, name_snapshot, token) VALUES (?, ?, ?, ?)');
     const info = stmt.run(req.params.id, person_id, person.name, token);
+
+    // Create notification for person
+    const event = db.prepare('SELECT title FROM events WHERE id = ?').get(req.params.id) as any;
+    db.prepare(`
+      INSERT INTO notifications (user_type, user_id, title, message, link)
+      VALUES ('person', ?, ?, ?, ?)
+    `).run(person_id, 'Neue Einladung', `Du wurdest zu "${event.title}" eingeladen.`, `/invite/${token}`);
+
     res.json({ id: info.lastInsertRowid, token });
   } catch (e: any) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -173,6 +203,41 @@ adminRouter.post('/events/:id/invites', (req, res) => {
     res.status(400).json({ error: 'Ungültige Eingabedaten' });
   }
 });
+adminRouter.post('/events/:id/invites/bulk', (req, res) => {
+  try {
+    const { person_ids } = bulkInviteSchema.parse(req.body);
+    const eventId = req.params.id;
+
+    const insert = db.prepare('INSERT INTO invitees (event_id, person_id, name_snapshot, token) VALUES (?, ?, ?, ?)');
+    const insertNotif = db.prepare(`
+      INSERT INTO notifications (user_type, user_id, title, message, link)
+      VALUES ('person', ?, ?, ?, ?)
+    `);
+    let addedCount = 0;
+
+    const event = db.prepare('SELECT title FROM events WHERE id = ?').get(eventId) as any;
+
+    db.transaction(() => {
+      for (const person_id of person_ids) {
+        const existing = db.prepare('SELECT 1 FROM invitees WHERE event_id = ? AND person_id = ?').get(eventId, person_id);
+        if (!existing) {
+          const person = db.prepare('SELECT name FROM persons WHERE id = ?').get(person_id) as any;
+          if (person) {
+            const token = crypto.randomBytes(16).toString('hex');
+            insert.run(eventId, person_id, person.name, token);
+            insertNotif.run(person_id, 'Neue Einladung', `Du wurdest zu "${event.title}" eingeladen.`, `/invite/${token}`);
+            addedCount++;
+          }
+        }
+      }
+    })();
+
+    res.json({ success: true, count: addedCount });
+  } catch (e: any) {
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
+  }
+});
+
 adminRouter.delete('/events/:id/invites/:inviteId', (req, res) => {
   db.prepare('DELETE FROM invitees WHERE id = ? AND event_id = ?').run(req.params.inviteId, req.params.id);
   res.json({ success: true });
@@ -213,11 +278,45 @@ adminRouter.get('/stats', (req, res) => {
   const totalEvents = db.prepare('SELECT COUNT(*) as count FROM events').get() as any;
   const totalPersons = db.prepare('SELECT COUNT(*) as count FROM persons').get() as any;
   const totalInvites = db.prepare('SELECT COUNT(*) as count FROM invitees').get() as any;
+  
+  const eventStats = db.prepare(`
+    SELECT 
+      e.id, 
+      e.title, 
+      e.date,
+      COUNT(i.id) as total_invites,
+      SUM(CASE WHEN i.status = 'yes' THEN 1 ELSE 0 END) as yes_count,
+      SUM(CASE WHEN i.status = 'no' THEN 1 ELSE 0 END) as no_count,
+      SUM(CASE WHEN i.status = 'maybe' THEN 1 ELSE 0 END) as maybe_count,
+      SUM(CASE WHEN i.status IS NULL THEN 1 ELSE 0 END) as pending_count
+    FROM events e
+    LEFT JOIN invitees i ON e.id = i.event_id
+    GROUP BY e.id
+    ORDER BY e.date DESC
+  `).all();
+
   res.json({
     events: totalEvents.count,
     persons: totalPersons.count,
-    invites: totalInvites.count
+    invites: totalInvites.count,
+    eventBreakdown: eventStats
   });
+});
+
+// Notifications
+adminRouter.get('/notifications', (req, res) => {
+  const notifs = db.prepare("SELECT * FROM notifications WHERE user_type = 'admin' ORDER BY created_at DESC LIMIT 50").all();
+  res.json(notifs);
+});
+
+adminRouter.put('/notifications/:id/read', (req, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_type = 'admin'").run(req.params.id);
+  res.json({ success: true });
+});
+
+adminRouter.put('/notifications/read-all', (req, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE user_type = 'admin'").run();
+  res.json({ success: true });
 });
 
 // Settings
@@ -270,9 +369,57 @@ apiRouter.use('/admin', adminRouter);
 
 // --- PUBLIC ROUTES ---
 const publicRouter = Router();
+
+publicRouter.post('/login', loginLimiter, (req, res) => {
+  try {
+    const { username, password } = loginSchema.parse(req.body);
+    const person = db.prepare('SELECT * FROM persons WHERE email = ? OR name = ?').get(username, username) as any;
+    if (!person || !person.password_hash || !bcrypt.compareSync(password, person.password_hash)) {
+      return res.status(401).json({ error: 'Ungültige Anmeldedaten' });
+    }
+    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '30d' });
+    res.cookie('person_token', token, { 
+      httpOnly: true, 
+      secure: true, 
+      sameSite: isProd ? 'lax' : 'none' 
+    });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: 'Ungültige Eingabedaten' });
+  }
+});
+
+publicRouter.post('/logout', (req, res) => {
+  res.clearCookie('person_token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: isProd ? 'lax' : 'none'
+  });
+  res.json({ success: true });
+});
+
+publicRouter.get('/check', requirePersonAuth, (req: any, res) => {
+  res.json({ user: req.person });
+});
+
+publicRouter.get('/dashboard', requirePersonAuth, (req: any, res) => {
+  const personId = req.person.id;
+  const invitations = db.prepare(`
+    SELECT i.*, e.title, e.date, e.location, e.description
+    FROM invitees i
+    JOIN events e ON i.event_id = e.id
+    WHERE i.person_id = ?
+    ORDER BY e.date ASC
+  `).all(personId);
+  res.json(invitations);
+});
+
 publicRouter.get('/invite/:token', (req, res) => {
   const invitee = db.prepare(`
-    SELECT * FROM invitees WHERE token = ?
+    SELECT i.*, p.password_hash as has_profile 
+    FROM invitees i 
+    JOIN persons p ON i.person_id = p.id
+    WHERE i.token = ?
   `).get(req.params.token) as any;
   
   if (!invitee) return res.status(404).json({ error: 'Einladung nicht gefunden' });
@@ -280,7 +427,54 @@ publicRouter.get('/invite/:token', (req, res) => {
   const event = db.prepare('SELECT * FROM events WHERE id = ?').get(invitee.event_id);
   if (!event) return res.status(404).json({ error: 'Event nicht gefunden' });
 
-  res.json({ invitee, event });
+  res.json({ 
+    invitee: { ...invitee, has_profile: !!invitee.has_profile }, 
+    event 
+  });
+});
+
+publicRouter.post('/invite/:token/setup-profile', (req, res) => {
+  try {
+    const { email, password } = setupProfileSchema.parse(req.body);
+    const invitee = db.prepare('SELECT person_id FROM invitees WHERE token = ?').get(req.params.token) as any;
+    if (!invitee || !invitee.person_id) return res.status(404).json({ error: 'Einladung nicht gefunden' });
+
+    const person = db.prepare('SELECT * FROM persons WHERE id = ?').get(invitee.person_id) as any;
+    if (person.password_hash) return res.status(400).json({ error: 'Profil bereits erstellt' });
+
+    const hash = bcrypt.hashSync(password, 10);
+    db.prepare('UPDATE persons SET email = ?, password_hash = ? WHERE id = ?').run(email, hash, invitee.person_id);
+
+    // Auto login after setup
+    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '30d' });
+    res.cookie('person_token', token, { 
+      httpOnly: true, 
+      secure: true, 
+      sameSite: isProd ? 'lax' : 'none' 
+    });
+
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ error: 'E-Mail Adresse wird bereits verwendet' });
+    }
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
+  }
+});
+
+publicRouter.get('/notifications', requirePersonAuth, (req: any, res) => {
+  const notifs = db.prepare("SELECT * FROM notifications WHERE user_type = 'person' AND user_id = ? ORDER BY created_at DESC LIMIT 50").all(req.person.id);
+  res.json(notifs);
+});
+
+publicRouter.put('/notifications/:id/read', requirePersonAuth, (req: any, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE id = ? AND user_type = 'person' AND user_id = ?").run(req.params.id, req.person.id);
+  res.json({ success: true });
+});
+
+publicRouter.put('/notifications/read-all', requirePersonAuth, (req: any, res) => {
+  db.prepare("UPDATE notifications SET is_read = 1 WHERE user_type = 'person' AND user_id = ?").run(req.person.id);
+  res.json({ success: true });
 });
 
 publicRouter.post('/invite/:token/respond', (req, res) => {
@@ -301,6 +495,25 @@ publicRouter.post('/invite/:token/respond', (req, res) => {
     
     if (info.changes === 0) return res.status(404).json({ error: 'Einladung nicht gefunden' });
     
+    // Create notification for admin
+    const inviteeDetails = db.prepare(`
+      SELECT i.name_snapshot, e.title, e.id as event_id
+      FROM invitees i JOIN events e ON i.event_id = e.id
+      WHERE i.token = ?
+    `).get(req.params.token) as any;
+
+    if (inviteeDetails) {
+      let statusText = status === 'yes' ? 'zugesagt' : status === 'no' ? 'abgesagt' : 'mit "Vielleicht" geantwortet';
+      db.prepare(`
+        INSERT INTO notifications (user_type, title, message, link)
+        VALUES ('admin', ?, ?, ?)
+      `).run(
+        'Neue Antwort',
+        `${inviteeDetails.name_snapshot} hat für "${inviteeDetails.title}" ${statusText}.`,
+        `/events/${inviteeDetails.event_id}`
+      );
+    }
+
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });

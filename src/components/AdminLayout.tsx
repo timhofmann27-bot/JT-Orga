@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { LogOut, Calendar, Users, BarChart } from 'lucide-react';
+import NotificationsMenu from './NotificationsMenu';
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -14,12 +15,12 @@ export default function AdminLayout() {
         return res.json();
       })
       .then(() => setLoading(false))
-      .catch(() => navigate('/login'));
+      .catch(() => navigate('/admin/login'));
   }, [navigate]);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
-    navigate('/login');
+    navigate('/admin/login');
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Lade...</div>;
@@ -56,13 +57,16 @@ export default function AdminLayout() {
               })}
             </nav>
           </div>
-          <button 
-            onClick={handleLogout}
-            className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm font-medium"
-          >
-            <LogOut className="w-4 h-4" />
-            Abmelden
-          </button>
+          <div className="flex items-center gap-4">
+            <NotificationsMenu apiPrefix="/api/admin" />
+            <button 
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-gray-700 flex items-center gap-2 text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Abmelden</span>
+            </button>
+          </div>
         </div>
         {/* Mobile Nav */}
         <div className="sm:hidden border-t border-gray-100 bg-white px-4 py-2 flex justify-around">
