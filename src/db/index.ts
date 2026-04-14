@@ -110,3 +110,12 @@ for (const admin of defaultAdmins) {
     console.log(`Admin created: ${admin.username}`);
   }
 }
+
+// Sync all admins to persons table so they can be invited
+const allAdmins = db.prepare('SELECT username FROM admin_users').all() as {username: string}[];
+for (const admin of allAdmins) {
+  const personExists = db.prepare('SELECT 1 FROM persons WHERE name = ?').get(admin.username);
+  if (!personExists) {
+    db.prepare('INSERT INTO persons (name, notes) VALUES (?, ?)').run(admin.username, 'Admin Account');
+  }
+}

@@ -350,6 +350,11 @@ adminRouter.put('/settings', (req: any, res) => {
         .run(username, req.admin.id);
     }
 
+    // Keep persons table in sync if username changed
+    if (username !== user.username) {
+      db.prepare('UPDATE persons SET name = ? WHERE name = ?').run(username, user.username);
+    }
+
     const token = jwt.sign({ id: req.admin.id, username: username }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('admin_token', token, { 
       httpOnly: true, 
