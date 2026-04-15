@@ -85,6 +85,17 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_type, user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS event_invitation_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    message TEXT NOT NULL,
+    scheduled_at DATETIME,
+    sent_at DATETIME,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+  );
 `);
 
 // Add meeting_point column if it doesn't exist (migration)

@@ -153,6 +153,24 @@ adminRouter.get('/events', (req, res) => {
 adminRouter.post('/events', (req, res) => {
   try {
     const { title, description, date, location, meeting_point, response_deadline } = eventSchema.parse(req.body);
+    
+    const eventDate = new Date(date);
+    const now = new Date();
+    
+    if (eventDate < now) {
+      return res.status(400).json({ error: 'Das Event-Datum darf nicht in der Vergangenheit liegen' });
+    }
+    
+    if (response_deadline) {
+      const deadlineDate = new Date(response_deadline);
+      if (deadlineDate < now) {
+        return res.status(400).json({ error: 'Die Antwortfrist darf nicht in der Vergangenheit liegen' });
+      }
+      if (deadlineDate > eventDate) {
+        return res.status(400).json({ error: 'Die Antwortfrist darf nicht nach dem Event-Datum liegen' });
+      }
+    }
+
     const stmt = db.prepare('INSERT INTO events (title, description, date, location, meeting_point, response_deadline) VALUES (?, ?, ?, ?, ?, ?)');
     const info = stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null);
     res.json({ id: info.lastInsertRowid });
@@ -189,6 +207,68 @@ adminRouter.get('/events/:id/invites', (req, res) => {
     WHERE i.event_id = ?
   `).all(req.params.id);
   res.json(invites);
+});
+
+// Invitation Steps
+adminRouter.get('/events/:id/invitation-steps', (req, res) => {
+  const steps = db.prepare('SELECT * FROM event_invitation_steps WHERE event_id = ? ORDER BY scheduled_at ASC').all(req.params.id);
+  res.json(steps);
+});
+
+adminRouter.post('/events/:id/invitation-steps', (req, res) => {
+  try {
+    const { name, message, scheduled_at } = req.body;
+    const stmt = db.prepare('INSERT INTO event_invitation_steps (event_id, name, message, scheduled_at) VALUES (?, ?, ?, ?)');
+    const info = stmt.run(req.params.id, name, message, scheduled_at || null);
+    res.json({ id: info.lastInsertRowid });
+  } catch (e: any) {
+    res.status(400).json({ error: 'Fehler beim Erstellen des Einladungsschritts' });
+  }
+});
+
+adminRouter.put('/events/:id/invitation-steps/:stepId', (req, res) => {
+  try {
+    const { name, message, scheduled_at } = req.body;
+    const stmt = db.prepare('UPDATE event_invitation_steps SET name = ?, message = ?, scheduled_at = ? WHERE id = ? AND event_id = ?');
+    stmt.run(name, message, scheduled_at || null, req.params.stepId, req.params.id);
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(400).json({ error: 'Fehler beim Aktualisieren des Einladungsschritts' });
+  }
+});
+
+adminRouter.delete('/events/:id/invitation-steps/:stepId', (req, res) => {
+  db.prepare('DELETE FROM event_invitation_steps WHERE id = ? AND event_id = ?').run(req.params.stepId, req.params.id);
+  res.json({ success: true });
+});
+
+adminRouter.post('/events/:id/invitation-steps/:stepId/trigger', (req, res) => {
+  try {
+    const step = db.prepare('SELECT * FROM event_invitation_steps WHERE id = ? AND event_id = ?').get(req.params.stepId, req.params.id) as any;
+    if (!step) return res.status(404).json({ error: 'Schritt nicht gefunden' });
+
+    // Logic to send invitations to all invitees of this event
+    const invitees = db.prepare('SELECT p.id, p.password_hash FROM invitees i JOIN persons p ON i.person_id = p.id WHERE i.event_id = ?').all(req.params.id) as any[];
+    const event = db.prepare('SELECT title FROM events WHERE id = ?').get(req.params.id) as any;
+
+    const insertNotif = db.prepare(`
+      INSERT INTO notifications (user_type, user_id, title, message, link)
+      VALUES ('person', ?, ?, ?, ?)
+    `);
+
+    db.transaction(() => {
+      for (const invitee of invitees) {
+        if (invitee.password_hash) {
+          insertNotif.run(invitee.id, step.name, step.message, `/events/${req.params.id}`);
+        }
+      }
+      db.prepare('UPDATE event_invitation_steps SET sent_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.stepId);
+    })();
+
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(400).json({ error: 'Fehler beim Auslösen des Einladungsschritts' });
+  }
 });
 
 adminRouter.put('/events/:id/archive', (req, res) => {

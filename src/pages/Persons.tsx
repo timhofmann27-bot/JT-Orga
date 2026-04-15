@@ -4,29 +4,29 @@ import toast from 'react-hot-toast';
 import { motion } from 'motion/react';
 import ConfirmModal from '../components/ConfirmModal';
 
-export default function Persons() {
-  const [persons, setPersons] = useState<any[]>([]);
+export default function Members() {
+  const [members, setMembers] = useState<any[]>([]);
   const [aktionen, setAktionen] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedAktionId, setSelectedAktionId] = useState('');
   const [isInviting, setIsInviting] = useState(false);
-  const [editingPerson, setEditingPerson] = useState<any>(null);
+  const [editingMember, setEditingMember] = useState<any>(null);
   const [formData, setFormData] = useState({ name: '', notes: '' });
   
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchPersons();
+    fetchMembers();
     fetchAktionen();
   }, []);
 
-  const fetchPersons = async () => {
+  const fetchMembers = async () => {
     try {
       const res = await fetch('/api/admin/persons');
-      if (res.ok) setPersons(await res.json());
+      if (res.ok) setMembers(await res.json());
     } catch (e) {
-      toast.error('Fehler beim Laden der Personen');
+      toast.error('Fehler beim Laden der Mitglieder');
     }
   };
 
@@ -41,8 +41,8 @@ export default function Persons() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const url = editingPerson ? `/api/admin/persons/${editingPerson.id}` : '/api/admin/persons';
-    const method = editingPerson ? 'PUT' : 'POST';
+    const url = editingMember ? `/api/admin/persons/${editingMember.id}` : '/api/admin/persons';
+    const method = editingMember ? 'PUT' : 'POST';
 
     try {
       const res = await fetch(url, {
@@ -56,11 +56,11 @@ export default function Persons() {
         throw new Error(err.error || 'Fehler beim Speichern');
       }
 
-      toast.success(editingPerson ? 'Person aktualisiert' : 'Person angelegt');
+      toast.success(editingMember ? 'Mitglied aktualisiert' : 'Mitglied angelegt');
       setShowModal(false);
-      setEditingPerson(null);
+      setEditingMember(null);
       setFormData({ name: '', notes: '' });
-      fetchPersons();
+      fetchMembers();
     } catch (e: any) {
       toast.error(e.message);
     }
@@ -72,7 +72,7 @@ export default function Persons() {
       const res = await fetch(`/api/admin/persons/${deleteId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Fehler beim Löschen');
       toast.success('Person gelöscht');
-      fetchPersons();
+      fetchMembers();
     } catch (e: any) {
       toast.error(e.message);
     } finally {
@@ -86,11 +86,11 @@ export default function Persons() {
     
     setIsInviting(true);
     try {
-      const personIds = persons.map(p => p.id);
+      const memberIds = members.map(m => m.id);
       const res = await fetch(`/api/admin/events/${selectedAktionId}/invites/bulk`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ person_ids: personIds })
+        body: JSON.stringify({ person_ids: memberIds })
       });
       
       if (!res.ok) {
@@ -99,7 +99,7 @@ export default function Persons() {
       }
 
       const data = await res.json();
-      toast.success(`${data.count} Personen erfolgreich eingeladen!`);
+      toast.success(`${data.count} Mitglieder erfolgreich eingeladen!`);
       setShowBulkModal(false);
       setSelectedAktionId('');
     } catch (e: any) {
@@ -109,14 +109,14 @@ export default function Persons() {
     }
   };
 
-  const openEdit = (person: any) => {
-    setEditingPerson(person);
-    setFormData({ name: person.name, notes: person.notes || '' });
+  const openEdit = (member: any) => {
+    setEditingMember(member);
+    setFormData({ name: member.name, notes: member.notes || '' });
     setShowModal(true);
   };
 
   const openNew = () => {
-    setEditingPerson(null);
+    setEditingMember(null);
     setFormData({ name: '', notes: '' });
     setShowModal(true);
   };
@@ -128,57 +128,57 @@ export default function Persons() {
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
             <Users className="w-5 h-5 text-white" />
           </div>
-          Personen
+          Mitglieder
         </h1>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <button
             onClick={() => setShowBulkModal(true)}
-            disabled={persons.length === 0}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 border border-white/10 text-white px-5 py-2.5 rounded-xl hover:bg-white/20 transition-all text-sm font-semibold disabled:opacity-50 backdrop-blur-md"
+            disabled={members.length === 0}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white/10 border border-white/10 text-white px-5 py-2.5 rounded-xl hover:bg-white/20 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm font-semibold disabled:opacity-50 backdrop-blur-md"
           >
             <CalendarPlus className="w-4 h-4" />
             Alle einladen
           </button>
           <button
             onClick={openNew}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-all text-sm font-bold shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white text-black px-5 py-2.5 rounded-xl hover:bg-gray-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm font-bold shadow-[0_0_15px_rgba(255,255,255,0.2)]"
           >
             <Plus className="w-4 h-4" />
-            Person anlegen
+            Mitglied anlegen
           </button>
         </div>
       </div>
 
       <div className="bg-[#111] rounded-[2rem] shadow-xl border border-white/10 overflow-hidden">
         <div className="divide-y divide-white/5">
-          {persons.map((person, i) => (
+          {members.map((member, i) => (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              key={person.id} 
+              key={member.id} 
               className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/5 gap-4 transition-colors group"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-lg text-white shadow-inner">
-                  {person.name.charAt(0).toUpperCase()}
+                  {member.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <div className="font-bold text-lg text-white">{person.name}</div>
-                  {person.notes && <div className="text-sm text-white/50 mt-1">{person.notes}</div>}
+                  <div className="font-bold text-lg text-white">{member.name}</div>
+                  {member.notes && <div className="text-sm text-white/50 mt-1">{member.notes}</div>}
                 </div>
               </div>
               <div className="flex items-center gap-2 self-end sm:self-auto sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 <button 
-                  onClick={() => openEdit(person)}
-                  className="p-2.5 text-white/60 bg-white/5 hover:text-white hover:bg-white/20 rounded-xl transition-all border border-white/10"
+                  onClick={() => openEdit(member)}
+                  className="p-2.5 text-white/60 bg-white/5 hover:text-white hover:bg-white/20 rounded-xl transition-all duration-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-white/30"
                   title="Bearbeiten"
                 >
                   <Edit2 className="w-4 h-4" />
                 </button>
                 <button 
-                  onClick={() => setDeleteId(person.id)}
-                  className="p-2.5 text-white/60 bg-white/5 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all border border-white/10"
+                  onClick={() => setDeleteId(member.id)}
+                  className="p-2.5 text-white/60 bg-white/5 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all duration-200 border border-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/30"
                   title="Löschen"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -186,7 +186,7 @@ export default function Persons() {
               </div>
             </motion.div>
           ))}
-          {persons.length === 0 && (
+          {members.length === 0 && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -202,7 +202,7 @@ export default function Persons() {
               >
                 <Users className="w-12 h-12 text-white/30" />
               </motion.div>
-              <p className="text-white/50 font-medium text-lg relative z-10">Noch keine Personen angelegt.</p>
+              <p className="text-white/50 font-medium text-lg relative z-10">Noch keine Mitglieder angelegt.</p>
             </motion.div>
           )}
         </div>
@@ -218,7 +218,7 @@ export default function Persons() {
             className="bg-[#111] border border-white/10 rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 relative overflow-hidden"
           >
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-            <h2 className="text-3xl font-bold mb-8 text-white tracking-tight relative z-10">{editingPerson ? 'Person bearbeiten' : 'Neue Person'}</h2>
+            <h2 className="text-3xl font-bold mb-8 text-white tracking-tight relative z-10">{editingMember ? 'Mitglied bearbeiten' : 'Neues Mitglied'}</h2>
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Name</label>
@@ -227,7 +227,7 @@ export default function Persons() {
                   type="text" 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition-all duration-200" 
                 />
               </div>
               <div>
@@ -235,7 +235,7 @@ export default function Persons() {
                 <textarea 
                   value={formData.notes} 
                   onChange={e => setFormData({...formData, notes: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition-all duration-200" 
                   rows={3}
                 ></textarea>
               </div>
@@ -265,7 +265,7 @@ export default function Persons() {
               Alle einladen
             </h2>
             <p className="text-sm text-white/60 mb-6 font-medium">
-              Wähle ein Aktion aus, um alle {persons.length} Personen aus dem Adressbuch dazu einzuladen. Personen, die bereits eingeladen sind, werden übersprungen.
+              Wähle ein Aktion aus, um alle {members.length} Mitglieder aus dem Adressbuch dazu einzuladen. Personen, die bereits eingeladen sind, werden übersprungen.
             </p>
             <form onSubmit={handleBulkInvite} className="space-y-5">
               <div>
@@ -274,7 +274,7 @@ export default function Persons() {
                   required 
                   value={selectedAktionId} 
                   onChange={e => setSelectedAktionId(e.target.value)} 
-                  className="w-full bg-black border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                  className="w-full bg-black border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition-all duration-200" 
                 >
                   <option value="">Bitte wählen...</option>
                   {aktionen.map(aktion => (
@@ -295,8 +295,8 @@ export default function Persons() {
 
       <ConfirmModal 
         isOpen={deleteId !== null}
-        title="Person löschen"
-        message="Möchtest du diese Person wirklich löschen? Alle Einladungen dieser Person werden ebenfalls unwiderruflich gelöscht."
+        title="Mitglied löschen"
+        message="Möchtest du dieses Mitglied wirklich löschen? Alle Einladungen dieses Mitglieds werden ebenfalls unwiderruflich gelöscht."
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

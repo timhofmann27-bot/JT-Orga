@@ -28,7 +28,7 @@ export default function AdminLayout() {
 
   const navItems = [
     { path: '/', label: 'Aktionen', icon: Calendar },
-    { path: '/persons', label: 'Personen', icon: Users },
+    { path: '/persons', label: 'Mitglieder', icon: Users },
     { path: '/stats', label: 'Statistik', icon: BarChart },
   ];
 
@@ -51,10 +51,17 @@ export default function AdminLayout() {
                   <Link 
                     key={item.path} 
                     to={item.path}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-white/10 text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                    className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
                   >
-                    <Icon className="w-4 h-4" />
-                    {item.label}
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-0 bg-white/10 rounded-xl"
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    <Icon className="w-4 h-4 relative z-10" />
+                    <span className="relative z-10">{item.label}</span>
                   </Link>
                 );
               })}
