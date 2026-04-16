@@ -15,9 +15,10 @@ interface TransitPlannerProps {
   onClose: () => void;
   destination: string;
   destinationName: string;
+  eventStartTime?: string;
 }
 
-export default function TransitPlanner({ isOpen, onClose, destination, destinationName }: TransitPlannerProps) {
+export default function TransitPlanner({ isOpen, onClose, destination, destinationName, eventStartTime }: TransitPlannerProps) {
   const [startPoint, setStartPoint] = useState('');
   const [useCurrentLocation, setUseCurrentLocation] = useState(true);
   const [departureTime, setDepartureTime] = useState<string>(''); // ISO string or empty for "now"
@@ -100,11 +101,45 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
     }
   }, [isOpen, destination]);
 
+  const getOfficialLinks = (arrivalMode = false) => {
+    const isCurrentLoc = startPoint === 'Aktueller Standort';
+    const start = isCurrentLoc ? '' : (startPoint || '');
+    const encodedStart = encodeURIComponent(start);
+    const encodedDest = encodeURIComponent(destination);
+    
+    // Modern "Next DB" parameters for bahn.de: so (start), zo (destination)
+    let dbUrl = `https://www.bahn.de/buchung/fahrplan/suche?so=${encodedStart}&zo=${encodedDest}`;
+    let gmapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${isCurrentLoc ? 'current location' : encodedStart}&destination=${encodedDest}&travelmode=transit`;
+
+    if (arrivalMode && eventStartTime) {
+      try {
+        const date = parseISO(eventStartTime);
+        const arrivalTimeValue = Math.floor(date.getTime() / 1000);
+        
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const timeStr = format(date, 'HH:mm');
+        
+        // DB: so=Start, zo=Ziel, date=YYYY-MM-DD, time=HH:mm, timesel=arrive
+        // Using the /fahrplan/suche endpoint directly to bypass the blank input mask
+        dbUrl = `https://www.bahn.de/buchung/fahrplan/suche?so=${encodedStart}&zo=${encodedDest}&date=${dateStr}&time=${timeStr}&timesel=arrive`;
+        
+        // Google Maps: Ensure arrival_time is passed correctly for transit travel mode
+        gmapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${isCurrentLoc ? 'current location' : encodedStart}&destination=${encodedDest}&travelmode=transit&arrival_time=${arrivalTimeValue}`;
+      } catch (e) {
+        console.error('Error generating arrival links:', e);
+      }
+    }
+
+    return { dbUrl, gmapsUrl };
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!startPoint) return;
     findRoutes(startPoint);
   };
+
+  const { dbUrl, gmapsUrl } = getOfficialLinks(true);
 
   return (
     <AnimatePresence>
@@ -235,7 +270,47 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
             </div>
 
             {/* Results */}
-            <div className="flex-1 overflow-y-auto p-8 sm:p-10 space-y-6">
+            <div className="flex-1 overflow-y-auto p-8 sm:p-10 space-y-8">
+              {/* Official Apps Section (Always visible for reliability) */}
+              <div className="bg-white/[0.03] border border-white/5 rounded-[2rem] p-6 space-y-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-[10px] font-black text-white/40 uppercase tracking-widest">Offizielle Planung</div>
+                  {eventStartTime && (
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                      <div className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[9px] font-black text-emerald-400 uppercase">Ziel-Ankunft: {format(parseISO(eventStartTime), 'HH:mm')}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <a 
+                    href={dbUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 bg-red-600/10 hover:bg-red-600/20 border border-red-600/20 p-4 rounded-2xl transition-all group active:scale-95"
+                  >
+                    <Train className="w-4 h-4 text-red-500" />
+                    <div className="text-left">
+                      <div className="text-[10px] font-black text-white uppercase tracking-tight">DB Navigator</div>
+                      <div className="text-[8px] font-bold text-red-500/60 uppercase">Detailliert</div>
+                    </div>
+                  </a>
+                  <a 
+                    href={gmapsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-3 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 p-4 rounded-2xl transition-all group active:scale-95"
+                  >
+                    <Navigation className="w-4 h-4 text-emerald-500" />
+                    <div className="text-left">
+                      <div className="text-[10px] font-black text-white uppercase tracking-tight">Google Maps</div>
+                      <div className="text-[8px] font-bold text-emerald-500/60 uppercase">Schnell</div>
+                    </div>
+                  </a>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="space-y-6">
                   <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-4">Suche Verbindungen...</div>
@@ -316,30 +391,9 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between pt-6 border-t border-white/5">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-3.5 h-3.5 text-white/20" />
-                          <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Abfahrt in {Math.round((parseISO(c.departure).getTime() - Date.now()) / 60000)} Min</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <a 
-                            href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint === 'Aktueller Standort' ? 'current location' : startPoint)}&destination=${encodeURIComponent(destination)}&travelmode=transit`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/90 transition-all shadow-xl shadow-white/5"
-                          >
-                            Navigieren <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                          <a 
-                            href={`https://reiseauskunft.bahn.de/bin/query.exe/dn?start=yes&S=${encodeURIComponent(startPoint === 'Aktueller Standort' ? '' : startPoint)}&Z=${encodeURIComponent(destination)}&mode=transit`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-600/10"
-                            title="Im DB Navigator öffnen"
-                          >
-                            DB <Train className="w-2.5 h-2.5" />
-                          </a>
-                        </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 text-white/20" />
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Abfahrt in {Math.round((parseISO(c.departure).getTime() - Date.now()) / 60000)} Min</span>
                       </div>
                     </motion.div>
                   ))}

@@ -613,6 +613,7 @@ export default function PublicInvite() {
         onClose={() => setShowTransit(false)}
         destination={aktion?.location}
         destinationName={aktion?.location}
+        eventStartTime={aktion?.date}
       />
     </div>
   );
