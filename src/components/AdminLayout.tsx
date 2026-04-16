@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
-import { LogOut, Calendar, Users, BarChart } from 'lucide-react';
+import { LogOut, Calendar, Users, BarChart, Layout } from 'lucide-react';
 import { motion } from 'motion/react';
 import NotificationsMenu from './NotificationsMenu';
 
@@ -30,20 +30,21 @@ export default function AdminLayout() {
     { path: '/', label: 'Aktionen', icon: Calendar },
     { path: '/persons', label: 'Mitglieder', icon: Users },
     { path: '/stats', label: 'Statistik', icon: BarChart },
+    { path: '/dashboard', label: 'Mein Dashboard', icon: Layout },
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col selection:bg-white/30">
-      <header className="sticky top-0 z-50 bg-black/50 backdrop-blur-2xl border-b border-white/10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2 text-white font-bold text-lg tracking-tight">
-              <div className="w-8 h-8 bg-white text-black rounded-xl flex items-center justify-center">
-                <Calendar className="w-4 h-4" />
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col selection:bg-white/20">
+      <header className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-12">
+            <Link to="/" className="flex items-center gap-3 text-white font-serif text-xl tracking-tight group">
+              <div className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center transition-transform group-hover:scale-105">
+                <Calendar className="w-5 h-5" />
               </div>
-              JT-ORGA
+              <span className="font-semibold">JT-ORGA</span>
             </Link>
-            <nav className="hidden sm:flex gap-1">
+            <nav className="hidden md:flex gap-2">
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path || (item.path === '/' && location.pathname.startsWith('/events'));
@@ -51,12 +52,12 @@ export default function AdminLayout() {
                   <Link 
                     key={item.path} 
                     to={item.path}
-                    className={`relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all ${isActive ? 'text-white' : 'text-white/50 hover:text-white hover:bg-white/5'}`}
+                    className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all ${isActive ? 'text-white' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                   >
                     {isActive && (
                       <motion.div
                         layoutId="nav-indicator"
-                        className="absolute inset-0 bg-white/10 rounded-xl"
+                        className="absolute inset-0 bg-white/10 rounded-full"
                         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       />
                     )}
@@ -67,19 +68,33 @@ export default function AdminLayout() {
               })}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <NotificationsMenu apiPrefix="/api/admin" />
+            <div className="h-6 w-px bg-white/10 hidden sm:block" />
             <button 
               onClick={handleLogout}
-              className="text-white/50 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors px-3 py-2 rounded-xl hover:bg-white/5"
+              className="text-white/40 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors px-4 py-2 rounded-full hover:bg-white/5 border border-transparent hover:border-white/10"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline">Abmelden</span>
             </button>
           </div>
         </div>
-        {/* Mobile Nav */}
-        <div className="sm:hidden border-t border-white/10 bg-black/50 backdrop-blur-2xl px-2 py-2 flex justify-around">
+      </header>
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 sm:px-8 lg:px-10 py-10 pb-32 md:pb-10 relative">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <Outlet />
+        </motion.div>
+      </main>
+
+      {/* Mobile Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#050505]/80 backdrop-blur-2xl border-t border-white/5 px-6 py-4 pb-8">
+        <div className="flex items-center justify-around">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path || (item.path === '/' && location.pathname.startsWith('/events'));
@@ -87,25 +102,17 @@ export default function AdminLayout() {
               <Link 
                 key={item.path} 
                 to={item.path}
-                className={`flex flex-col items-center gap-1 p-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${isActive ? 'text-white bg-white/10' : 'text-white/40 hover:text-white/80'}`}
+                className={`flex flex-col items-center gap-1.5 transition-all ${isActive ? 'text-white' : 'text-white/30'}`}
               >
-                <Icon className="w-5 h-5 mb-0.5" />
-                {item.label}
+                <div className={`p-2 rounded-xl transition-all ${isActive ? 'bg-white/10' : ''}`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
               </Link>
             );
           })}
         </div>
-      </header>
-      <main className="flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative">
-        <motion.div
-          key={location.pathname}
-          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
-          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Outlet />
-        </motion.div>
-      </main>
+      </nav>
     </div>
   );
 }

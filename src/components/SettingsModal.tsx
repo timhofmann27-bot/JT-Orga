@@ -81,107 +81,104 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-2xl">
       <motion.div 
-        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.9, y: 20 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-[#111] border border-white/10 rounded-[2.5rem] shadow-2xl max-w-md w-full p-8 relative overflow-y-auto max-h-[90vh]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-[#050505] border border-white/10 rounded-[3rem] shadow-2xl max-w-md w-full p-12 relative overflow-y-auto max-h-[90vh] overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
         <button 
           onClick={onClose} 
-          className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors z-10"
+          className="absolute top-8 right-8 text-white/20 hover:text-white transition-colors z-10"
         >
-          <X className="w-5 h-5" />
+          <X className="w-6 h-6" />
         </button>
         
-        <div className="flex items-center gap-4 mb-8 relative z-10">
-          <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center shrink-0">
-            <Settings className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-6 mb-10 relative z-10">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+            <Settings className="w-7 h-7 text-white/40" />
           </div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Einstellungen</h2>
+          <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Einstellungen</h2>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-          <div>
-            <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Benutzername</label>
+        <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Benutzername</label>
             <input 
               required 
               type="text" 
               value={username} 
               onChange={e => setUsername(e.target.value)} 
-              className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+              className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" 
             />
           </div>
 
-          <div className="pt-6 border-t border-white/10">
-            <h3 className="text-sm font-bold text-white mb-4">Passwort ändern (optional)</h3>
+          <div className="pt-8 border-t border-white/5">
+            <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em] mb-6">Passwort ändern</h3>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Aktuelles Passwort</label>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Aktuelles Passwort</label>
                 <div className="relative">
                   <input 
                     type={showCurrent ? "text" : "password"} 
                     value={currentPassword} 
                     onChange={e => setCurrentPassword(e.target.value)} 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 pr-14 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" 
                   />
-                  <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
-                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                    {showCurrent ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Neues Passwort</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Neues Passwort</label>
                 <div className="relative">
                   <input 
                     type={showNew ? "text" : "password"} 
                     value={newPassword} 
                     onChange={e => setNewPassword(e.target.value)} 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 pr-14 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" 
                   />
-                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
-                    {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                    {showNew ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-white/50 uppercase tracking-widest mb-2">Neues Passwort bestätigen</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Bestätigen</label>
                 <div className="relative">
                   <input 
                     type={showConfirm ? "text" : "password"} 
                     value={confirmPassword} 
                     onChange={e => setConfirmPassword(e.target.value)} 
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pr-10 text-white focus:ring-2 focus:ring-white/30 outline-none transition-all" 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 pr-14 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" 
                   />
-                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors">
-                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                    {showConfirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-6">
+          <div className="flex gap-4 pt-8">
             <button 
               type="button" 
               onClick={onClose} 
               disabled={loading}
-              className="w-full sm:flex-1 px-4 py-3 border border-white/10 text-white rounded-xl hover:bg-white/5 font-bold transition-colors disabled:opacity-50"
+              className="flex-1 px-6 py-4 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all disabled:opacity-20"
             >
               Abbrechen
             </button>
             <button 
               type="submit" 
               disabled={loading}
-              className="w-full sm:flex-1 px-4 py-3 bg-white text-black rounded-xl hover:bg-gray-200 font-bold transition-colors disabled:opacity-50 flex items-center justify-center"
+              className="flex-1 px-6 py-4 bg-white text-black rounded-2xl font-bold hover:bg-white/90 transition-all disabled:opacity-20 flex items-center justify-center"
             >
-              {loading ? 'Speichert...' : 'Speichern'}
+              {loading ? '...' : 'Speichern'}
             </button>
           </div>
         </form>

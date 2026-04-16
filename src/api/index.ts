@@ -21,7 +21,7 @@ const requireAuth = (req: any, res: any, next: any) => {
   const token = req.cookies.admin_token;
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; username: string };
     req.admin = decoded;
     next();
   } catch (err) {
@@ -30,16 +30,34 @@ const requireAuth = (req: any, res: any, next: any) => {
 };
 
 const requirePersonAuth = (req: any, res: any, next: any) => {
-  const token = req.cookies.person_token;
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET) as any;
-    if (decoded.type !== 'person') throw new Error('Not a person token');
-    req.person = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
+  const personToken = req.cookies.person_token;
+  const adminToken = req.cookies.admin_token;
+
+  if (personToken) {
+    try {
+      const decoded = jwt.verify(personToken, JWT_SECRET) as { id: number; name: string; type: string };
+      if (decoded.type !== 'person') throw new Error('Not a person token');
+      req.person = decoded;
+      return next();
+    } catch (err) {
+      // fall through
+    }
   }
+
+  if (adminToken) {
+    try {
+      const decoded = jwt.verify(adminToken, JWT_SECRET) as { id: number; username: string };
+      const admin = db.prepare('SELECT person_id FROM admin_users WHERE id = ?').get(decoded.id) as { person_id: number } | undefined;
+      if (admin?.person_id) {
+        req.person = { id: admin.person_id, name: decoded.username, type: 'person' };
+        return next();
+      }
+    } catch (err) {
+      // fall through
+    }
+  }
+
+  res.status(401).json({ error: 'Unauthorized' });
 };
 
 // --- RATE LIMITING ---
@@ -142,7 +160,7 @@ adminRouter.get('/events', (req, res) => {
     SELECT 
       e.*,
       COUNT(i.id) as total_invites,
-      SUM(CASE WHEN i.status = 'yes' THEN 1 ELSE 0 END) as yes_count
+      COUNT(CASE WHEN i.status = 'yes' THEN 1 END) as yes_count
     FROM events e
     LEFT JOIN invitees i ON e.id = i.event_id
     GROUP BY e.id
@@ -390,7 +408,7 @@ adminRouter.put('/events/:id/invites/:inviteId/status', (req, res) => {
 
 // Persons
 adminRouter.get('/persons', (req, res) => {
-  const persons = db.prepare('SELECT * FROM persons ORDER BY name ASC').all();
+  const persons = db.prepare('SELECT id, name, username, email, notes, created_at FROM persons ORDER BY name ASC').all();
   res.json(persons);
 });
 adminRouter.post('/persons', (req, res) => {
@@ -436,10 +454,10 @@ adminRouter.get('/stats', (req, res) => {
       e.title, 
       e.date,
       COUNT(i.id) as total_invites,
-      SUM(CASE WHEN i.status = 'yes' THEN 1 ELSE 0 END) as yes_count,
-      SUM(CASE WHEN i.status = 'no' THEN 1 ELSE 0 END) as no_count,
-      SUM(CASE WHEN i.status = 'maybe' THEN 1 ELSE 0 END) as maybe_count,
-      SUM(CASE WHEN i.status IS NULL OR i.status = 'pending' THEN 1 ELSE 0 END) as pending_count
+      COUNT(CASE WHEN i.status = 'yes' THEN 1 END) as yes_count,
+      COUNT(CASE WHEN i.status = 'no' THEN 1 END) as no_count,
+      COUNT(CASE WHEN i.status = 'maybe' THEN 1 END) as maybe_count,
+      COUNT(CASE WHEN i.status = 'pending' OR (i.id IS NOT NULL AND i.status IS NULL) THEN 1 END) as pending_count
     FROM events e
     LEFT JOIN invitees i ON e.id = i.event_id
     GROUP BY e.id
@@ -513,8 +531,8 @@ adminRouter.put('/settings', (req: any, res) => {
     }
 
     // Keep persons table in sync if username changed
-    if (username !== user.username) {
-      db.prepare('UPDATE persons SET name = ? WHERE name = ?').run(username, user.username);
+    if (username !== user.username && user.person_id) {
+      db.prepare('UPDATE persons SET name = ? WHERE id = ?').run(username, user.person_id);
     }
 
     const token = jwt.sign({ id: req.admin.id, username: username }, JWT_SECRET, { expiresIn: '7d' });
@@ -567,7 +585,8 @@ publicRouter.post('/logout', (req, res) => {
 });
 
 publicRouter.get('/check', requirePersonAuth, (req: any, res) => {
-  res.json({ user: req.person });
+  const isAdmin = !!req.cookies.admin_token;
+  res.json({ user: req.person, isAdmin });
 });
 
 publicRouter.get('/dashboard', requirePersonAuth, (req: any, res) => {

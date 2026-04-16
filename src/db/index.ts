@@ -19,7 +19,9 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS admin_users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL
+    password_hash TEXT NOT NULL,
+    person_id INTEGER,
+    FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE SET NULL
   );
 
   CREATE TABLE IF NOT EXISTS persons (
@@ -80,6 +82,15 @@ db.exec(`
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
   );
 `);
+
+// Add person_id to admin_users if it doesn't exist (migration)
+try {
+  db.exec('ALTER TABLE admin_users ADD COLUMN person_id INTEGER');
+} catch (e: any) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('Error adding person_id column to admin_users:', e);
+  }
+}
 
 // Add meeting_point column if it doesn't exist (migration)
 try {
@@ -142,10 +153,24 @@ for (const admin of defaultAdmins) {
 }
 
 // Sync all admins to persons table so they can be invited
-const allAdmins = db.prepare('SELECT username FROM admin_users').all() as {username: string}[];
+const allAdmins = db.prepare('SELECT id, username, person_id FROM admin_users').all() as {id: number, username: string, person_id: number | null}[];
 for (const admin of allAdmins) {
-  const personExists = db.prepare('SELECT 1 FROM persons WHERE name = ?').get(admin.username);
-  if (!personExists) {
-    db.prepare('INSERT INTO persons (name, notes) VALUES (?, ?)').run(admin.username, 'Admin Account');
+  let personId = admin.person_id;
+  
+  if (!personId) {
+    // Try to find by name if person_id is missing
+    const existingPerson = db.prepare('SELECT id FROM persons WHERE name = ?').get(admin.username) as {id: number} | undefined;
+    if (existingPerson) {
+      personId = existingPerson.id;
+      db.prepare('UPDATE admin_users SET person_id = ? WHERE id = ?').run(personId, admin.id);
+    } else {
+      // Create new person for admin
+      const info = db.prepare('INSERT INTO persons (name, notes) VALUES (?, ?)').run(admin.username, 'Admin Account');
+      personId = info.lastInsertRowid as number;
+      db.prepare('UPDATE admin_users SET person_id = ? WHERE id = ?').run(personId, admin.id);
+    }
+  } else {
+    // Ensure name is in sync
+    db.prepare('UPDATE persons SET name = ? WHERE id = ?').run(admin.username, personId);
   }
 }

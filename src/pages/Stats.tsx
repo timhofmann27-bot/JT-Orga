@@ -16,138 +16,90 @@ export default function Stats() {
   if (!stats) return <div className="p-8 text-center">Lade...</div>;
 
   return (
-    <div className="space-y-10">
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-8 flex items-center gap-3 tracking-tight">
-          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-            <BarChart className="w-5 h-5 text-white" />
+    <div className="pb-24">
+      <div className="mb-16">
+        <h1 className="text-5xl font-serif font-bold text-white mb-12 flex items-center gap-6 tracking-tight">
+          <div className="w-16 h-16 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center justify-center shadow-2xl">
+            <BarChart className="w-8 h-8 text-white/40" />
           </div>
           Statistik
         </h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <motion.div 
-            initial={{ opacity: 0, y: 30, scale: 0.95 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }} 
-            transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }} 
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-[#111] p-8 rounded-[2.5rem] shadow-xl border border-white/10 flex items-center gap-6 relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
-              <Calendar className="w-8 h-8 text-white/80" />
-            </div>
-            <div>
-              <div className="text-xs font-black text-white/40 uppercase tracking-widest mb-1">Aktionen gesamt</div>
-              <div className="text-4xl font-black text-white">{stats.aktionen}</div>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 30, scale: 0.95 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }} 
-            transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }} 
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-[#111] p-8 rounded-[2.5rem] shadow-xl border border-white/10 flex items-center gap-6 relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
-              <Users className="w-8 h-8 text-white/80" />
-            </div>
-            <div>
-              <div className="text-xs font-black text-white/40 uppercase tracking-widest mb-1">Personen</div>
-              <div className="text-4xl font-black text-white">{stats.persons}</div>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            initial={{ opacity: 0, y: 30, scale: 0.95 }} 
-            animate={{ opacity: 1, y: 0, scale: 1 }} 
-            transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }} 
-            whileHover={{ scale: 1.02, y: -5 }}
-            className="bg-[#111] p-8 rounded-[2.5rem] shadow-xl border border-white/10 flex items-center gap-6 relative overflow-hidden"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-            <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/10">
-              <Mail className="w-8 h-8 text-white/80" />
-            </div>
-            <div>
-              <div className="text-xs font-black text-white/40 uppercase tracking-widest mb-1">Einladungen</div>
-              <div className="text-4xl font-black text-white">{stats.invites}</div>
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          {[
+            { label: 'Aktionen gesamt', value: stats.events, icon: Calendar },
+            { label: 'Personen', value: stats.persons, icon: Users },
+            { label: 'Einladungen', value: stats.invites, icon: Mail }
+          ].map((item, i) => (
+            <motion.div 
+              key={item.label}
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }} 
+              className="bg-white/[0.02] p-10 rounded-[3rem] shadow-2xl border border-white/5 flex items-center gap-8 relative overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
+              <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5 group-hover:scale-110 transition-transform duration-500">
+                <item.icon className="w-8 h-8 text-white/20" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mb-2">{item.label}</div>
+                <div className="text-4xl font-serif font-bold text-white">{item.value}</div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 30, scale: 0.98 }} 
-        animate={{ opacity: 1, y: 0, scale: 1 }} 
-        transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }} 
-        className="bg-[#111] rounded-[2.5rem] shadow-xl border border-white/10 overflow-hidden"
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }} 
+        className="bg-white/[0.02] rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden"
       >
-        <div className="p-8 border-b border-white/10 bg-white/5">
-          <h2 className="text-xl font-bold text-white">Antworten pro Aktion</h2>
+        <div className="p-10 border-b border-white/5 bg-white/5">
+          <h2 className="text-2xl font-serif font-bold text-white">Antworten pro Aktion</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-black/50 text-xs font-black text-white/40 uppercase tracking-widest">
-                <th className="px-8 py-4">Aktion</th>
-                <th className="px-8 py-4">Datum</th>
-                <th className="px-8 py-4 text-center">Einladungen</th>
-                <th className="px-8 py-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-green-400">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Zusagen
-                  </div>
-                </th>
-                <th className="px-8 py-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-red-400">
-                    <XCircle className="w-4 h-4" />
-                    Absagen
-                  </div>
-                </th>
-                <th className="px-8 py-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-amber-400">
-                    <HelpCircle className="w-4 h-4" />
-                    Vielleicht
-                  </div>
-                </th>
-                <th className="px-8 py-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-white/40">
-                    <Clock className="w-4 h-4" />
-                    Offen
-                  </div>
-                </th>
+              <tr className="bg-black/50 text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">
+                <th className="px-10 py-6">Aktion</th>
+                <th className="px-10 py-6">Datum</th>
+                <th className="px-10 py-6 text-center">Einladungen</th>
+                <th className="px-10 py-6 text-center">Zusagen</th>
+                <th className="px-10 py-6 text-center">Absagen</th>
+                <th className="px-10 py-6 text-center">Vielleicht</th>
+                <th className="px-10 py-6 text-center">Offen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {stats.aktionBreakdown?.map((aktion: any) => (
-                <tr key={aktion.id} className="hover:bg-white/5 transition-colors">
-                  <td className="px-8 py-5 font-bold text-white">{aktion.title}</td>
-                  <td className="px-8 py-5 text-sm font-medium text-white/50">
+              {stats.eventBreakdown?.map((aktion: any) => (
+                <tr key={aktion.id} className="hover:bg-white/[0.03] transition-colors group">
+                  <td className="px-10 py-8 font-serif text-xl text-white group-hover:text-white transition-colors">{aktion.title}</td>
+                  <td className="px-10 py-8 text-sm font-medium text-white/30">
                     {format(parseISO(aktion.date), 'dd.MM.yyyy', { locale: de })}
                   </td>
-                  <td className="px-8 py-5 text-center text-lg font-black text-white">
+                  <td className="px-10 py-8 text-center text-xl font-serif font-bold text-white">
                     {aktion.total_invites}
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black bg-green-500/20 text-green-400 border border-green-500/30">
+                  <td className="px-10 py-8 text-center">
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/10 uppercase tracking-widest">
                       {aktion.yes_count}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black bg-red-500/20 text-red-400 border border-red-500/30">
+                  <td className="px-10 py-8 text-center">
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/10 uppercase tracking-widest">
                       {aktion.no_count}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  <td className="px-10 py-8 text-center">
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/10 uppercase tracking-widest">
                       {aktion.maybe_count}
                     </span>
                   </td>
-                  <td className="px-8 py-5 text-center">
-                    <span className="inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-black bg-white/10 text-white/50 border border-white/10">
+                  <td className="px-10 py-8 text-center">
+                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-white/5 text-white/20 border border-white/5 uppercase tracking-widest">
                       {aktion.pending_count}
                     </span>
                   </td>
@@ -155,7 +107,7 @@ export default function Stats() {
               ))}
               {(!stats.aktionBreakdown || stats.aktionBreakdown.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-8 py-16 text-center text-white/40 font-medium text-lg">
+                  <td colSpan={7} className="px-10 py-24 text-center text-white/10 font-serif text-xl">
                     Keine Aktionen gefunden.
                   </td>
                 </tr>
