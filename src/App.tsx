@@ -13,6 +13,9 @@ import EventDetails from './pages/EventDetails';
 import Persons from './pages/Persons';
 import Stats from './pages/Stats';
 import PublicInvite from './pages/PublicInvite';
+import RegisterRequest from './pages/RegisterRequest';
+import Register from './pages/Register';
+import RegistrationRequests from './pages/RegistrationRequests';
 
 export default function App() {
   return (
@@ -21,6 +24,8 @@ export default function App() {
       <Routes>
         <Route path="/admin/login" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/register-request" element={<RegisterRequest />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<PersonDashboard />} />
         <Route path="/invite/:token" element={<PublicInvite />} />
         
@@ -29,6 +34,7 @@ export default function App() {
           <Route path="events/:id" element={<EventDetails />} />
           <Route path="persons" element={<Persons />} />
           <Route path="stats" element={<Stats />} />
+          <Route path="registration-requests" element={<RegistrationRequests />} />
         </Route>
       </Routes>
     </BrowserRouter>

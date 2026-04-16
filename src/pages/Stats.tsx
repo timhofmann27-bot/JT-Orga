@@ -54,50 +54,53 @@ export default function Stats() {
   };
 
   return (
-    <div className="pb-24">
-      <div className="mb-16">
-        <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white mb-12 flex items-center gap-6 tracking-tight">
-          <div className="w-16 h-16 bg-white/[0.02] border border-white/5 rounded-3xl flex items-center justify-center shadow-2xl">
-            <BarChartIcon className="w-8 h-8 text-white/40" />
+    <div className="pb-32">
+      <div className="mb-20">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-16">
+          <div className="space-y-2">
+            <h1 className="text-5xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-none">Analyse</h1>
+            <p className="text-white/30 font-medium text-lg tracking-tight">Erfolg und Engagement deiner Events.</p>
           </div>
-          Statistik
-        </h1>
+          <div className="w-16 h-16 bg-surface-elevated border border-white/10 rounded-[2rem] flex items-center justify-center shadow-2xl relative overflow-hidden group">
+            <BarChartIcon className="w-8 h-8 text-white/40 group-hover:scale-110 transition-transform duration-500 relative z-10" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {[
-            { label: 'Aktionen gesamt', value: stats.events, icon: Calendar, color: 'white' },
+            { label: 'Aktionen', value: stats.events, icon: Calendar, color: 'blue' },
             { 
               label: 'Archiviert', 
               value: stats.archived_events, 
               icon: Archive, 
-              color: 'white',
-              sub: `${Math.round(stats.archived_pct)}% aller Aktionen`
+              color: 'purple',
+              sub: `${Math.round(stats.archived_pct)}%`
             },
-            { label: 'Personen', value: stats.persons, icon: Users, color: 'white' },
-            { label: 'Einladungen', value: stats.invites, icon: Mail, color: 'white' }
+            { label: 'Mitglieder', value: stats.persons, icon: Users, color: 'emerald' },
+            { label: 'Einladungen', value: stats.invites, icon: Mail, color: 'rose' }
           ].map((item, i) => (
             <motion.div 
               key={item.label}
-              initial={{ opacity: 0, y: 20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ duration: 0.6, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }} 
-              className="bg-white/[0.02] p-6 sm:p-10 rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-white/5 flex flex-col gap-6 relative overflow-hidden group hover:bg-white/[0.04] transition-all duration-500"
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              transition={{ duration: 0.5, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }} 
+              className="bg-surface-muted p-6 sm:p-8 rounded-[2.5rem] shadow-2xl border border-white/5 flex flex-col gap-8 relative overflow-hidden group hover:bg-surface-elevated transition-colors"
             >
               <div className="flex items-center justify-between">
-                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5 group-hover:scale-110 transition-transform duration-500">
-                  <item.icon className="w-6 h-6 text-white/20" />
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5 group-hover:scale-110 transition-transform duration-500">
+                  <item.icon className="w-5 h-5 text-white/20" />
                 </div>
                 {item.sub && (
-                  <div className="text-[10px] font-bold text-white/40 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-widest">
+                  <div className="text-[9px] font-black text-white/20 px-3 py-1.5 rounded-full border border-white/5 uppercase tracking-widest">
                     {item.sub}
                   </div>
                 )}
               </div>
-              <div>
-                <div className="text-[10px] font-bold text-white/20 uppercase tracking-[0.3em] mb-2">{item.label}</div>
-                <div className="text-4xl font-serif font-bold text-white tracking-tight">{item.value}</div>
+              <div className="space-y-1">
+                <div className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">{item.label}</div>
+                <div className="text-4xl font-serif font-bold text-white tracking-tighter">{item.value}</div>
               </div>
-              <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </motion.div>
           ))}
         </div>
@@ -107,16 +110,27 @@ export default function Stats() {
       <motion.div 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
-        transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }} 
-        className="bg-white/[0.02] p-6 sm:p-12 rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-white/5 mb-16 relative overflow-hidden"
+        transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }} 
+        className="bg-surface-muted p-8 sm:p-14 rounded-[3rem] shadow-2xl border border-white/5 mb-16 relative overflow-hidden"
       >
-        <div className="flex items-center gap-4 mb-12">
-          <div className="w-12 h-12 bg-white/5 border border-white/5 rounded-2xl flex items-center justify-center">
-            <TrendingUp className="w-6 h-6 text-white/40" />
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-16">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-serif font-bold text-white tracking-tighter">Response Trends</h2>
+            <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">Letzte 10 Aktionen im Vergleich</p>
           </div>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight">Antwort-Trends</h2>
-            <p className="text-xs font-bold text-white/20 uppercase tracking-[0.2em]">Die letzten 10 Aktionen im Vergleich</p>
+          <div className="flex items-center gap-4 bg-black/40 p-2 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-2 px-3 py-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
+              <span className="text-[9px] font-black text-white/30 uppercase">Zusagen</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1">
+              <div className="w-2 h-2 rounded-full bg-amber-500/60" />
+              <span className="text-[9px] font-black text-white/30 uppercase">Vielleicht</span>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1">
+              <div className="w-2 h-2 rounded-full bg-rose-500/60" />
+              <span className="text-[9px] font-black text-white/30 uppercase">Absagen</span>
+            </div>
           </div>
         </div>
         
@@ -124,50 +138,47 @@ export default function Stats() {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chartData}
-              margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
-              barGap={8}
+              margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
+              barGap={4}
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
+              <CartesianGrid strokeDasharray="0 0" stroke="#ffffff03" vertical={false} />
               <XAxis 
                 dataKey="name" 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#ffffff30', fontSize: 10, fontWeight: 700 }}
-                dy={10}
+                tick={{ fill: '#ffffff15', fontSize: 9, fontWeight: 900 }}
+                dy={15}
               />
               <YAxis 
                 axisLine={false} 
                 tickLine={false} 
-                tick={{ fill: '#ffffff30', fontSize: 10, fontWeight: 700 }}
+                tick={{ fill: '#ffffff15', fontSize: 9, fontWeight: 900 }}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff05' }} />
-              <Legend 
-                verticalAlign="top" 
-                align="right" 
-                iconType="circle"
-                wrapperStyle={{ paddingBottom: '40px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.2em' }}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff03' }} />
               <Bar 
                 dataKey="Zusagen" 
-                fill="#22c55e" 
-                fillOpacity={0.6} 
-                radius={[4, 4, 0, 0]} 
-                animationDuration={1500} 
+                fill="#10b981" 
+                fillOpacity={0.4} 
+                radius={[8, 8, 8, 8]} 
+                animationDuration={2000} 
+                barSize={12}
               />
               <Bar 
                 dataKey="Vielleicht" 
                 name="Vielleicht" 
                 fill="#f59e0b" 
-                fillOpacity={0.6} 
-                radius={[4, 4, 0, 0]} 
-                animationDuration={1500} 
+                fillOpacity={0.4} 
+                radius={[8, 8, 8, 8]} 
+                animationDuration={2000} 
+                barSize={12}
               />
               <Bar 
                 dataKey="Absagen" 
-                fill="#ef4444" 
-                fillOpacity={0.6} 
-                radius={[4, 4, 0, 0]} 
-                animationDuration={1500} 
+                fill="#f43f5e" 
+                fillOpacity={0.4} 
+                radius={[8, 8, 8, 8]} 
+                animationDuration={2000} 
+                barSize={12}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -175,66 +186,71 @@ export default function Stats() {
       </motion.div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }} 
-        className="bg-white/[0.02] rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden"
+        initial={{ opacity: 0, scale: 0.98 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }} 
+        className="bg-surface-muted rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden"
       >
-        <div className="p-6 sm:p-10 border-b border-white/5 bg-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-xl sm:text-2xl font-serif font-bold text-white tracking-tight">Detaillierte Aufschlüsselung</h2>
-          <div className="text-[10px] font-bold text-white/20 uppercase tracking-widest bg-white/5 px-4 py-2 rounded-full border border-white/5">
-            Alle Aktionen
+        <div className="p-8 sm:p-12 border-b border-white/5 bg-white/[0.01] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-serif font-bold text-white tracking-tighter">Event Logs</h2>
+            <p className="text-white/20 text-xs font-medium tracking-tight">Detaillierte Antwortstatistik pro Aktion</p>
+          </div>
+          <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] bg-white/5 px-6 py-3 rounded-2xl border border-white/5">
+            Historie
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
+        <div className="overflow-x-auto px-4 pb-8">
+          <table className="w-full text-left border-collapse min-w-[900px]">
             <thead>
-              <tr className="bg-black/50 text-[10px] font-bold text-white/20 uppercase tracking-[0.3em]">
-                <th className="px-10 py-6">Aktion</th>
-                <th className="px-10 py-6">Datum</th>
-                <th className="px-10 py-6 text-center">Einladungen</th>
-                <th className="px-10 py-6 text-center">Zusagen</th>
-                <th className="px-10 py-6 text-center">Absagen</th>
-                <th className="px-10 py-6 text-center">Vielleicht</th>
-                <th className="px-10 py-6 text-center">Offen</th>
+              <tr className="text-[9px] font-black text-white/10 uppercase tracking-[0.4em]">
+                <th className="px-10 py-10">Aktion</th>
+                <th className="px-10 py-10">Datum</th>
+                <th className="px-10 py-10 text-center">Invites</th>
+                <th className="px-10 py-10 text-center">Dabei</th>
+                <th className="px-10 py-10 text-center">Maybe</th>
+                <th className="px-10 py-10 text-center">Nein</th>
+                <th className="px-10 py-10 text-center">Offen</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {stats.eventBreakdown?.map((aktion: any) => (
-                <tr key={aktion.id} className="hover:bg-white/[0.03] transition-colors group">
-                  <td className="px-10 py-8 font-serif text-xl text-white group-hover:text-white transition-colors">{aktion.title}</td>
-                  <td className="px-10 py-8 text-sm font-medium text-white/30">
+                <tr key={aktion.id} className="hover:bg-white/[0.02] transition-all group">
+                  <td className="px-10 py-10">
+                    <div className="font-serif text-2xl text-white group-hover:text-white transition-colors tracking-tighter font-bold">{aktion.title}</div>
+                  </td>
+                  <td className="px-10 py-10 text-sm font-bold text-white/20 uppercase tracking-widest">
                     {format(parseISO(aktion.date), 'dd.MM.yyyy', { locale: de })}
                   </td>
-                  <td className="px-10 py-8 text-center text-xl font-serif font-bold text-white">
+                  <td className="px-10 py-10 text-center text-2xl font-serif font-bold text-white/40">
                     {aktion.total_invites}
                   </td>
-                  <td className="px-10 py-8 text-center">
-                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/10 uppercase tracking-widest">
+                  <td className="px-10 py-10 text-center">
+                    <div className="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 rounded-xl text-[10px] font-black bg-emerald-500/10 text-emerald-400/80 border border-emerald-500/10">
                       {aktion.yes_count}
-                    </span>
+                    </div>
                   </td>
-                  <td className="px-10 py-8 text-center">
-                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/10 uppercase tracking-widest">
-                      {aktion.no_count}
-                    </span>
-                  </td>
-                  <td className="px-10 py-8 text-center">
-                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/10 uppercase tracking-widest">
+                  <td className="px-10 py-10 text-center">
+                    <div className="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 rounded-xl text-[10px] font-black bg-amber-500/10 text-amber-400/80 border border-amber-500/10">
                       {aktion.maybe_count}
-                    </span>
+                    </div>
                   </td>
-                  <td className="px-10 py-8 text-center">
-                    <span className="inline-flex items-center justify-center px-4 py-1.5 rounded-full text-[10px] font-bold bg-white/5 text-white/20 border border-white/5 uppercase tracking-widest">
+                  <td className="px-10 py-10 text-center">
+                    <div className="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 rounded-xl text-[10px] font-black bg-rose-500/10 text-rose-400/80 border border-rose-500/10">
+                      {aktion.no_count}
+                    </div>
+                  </td>
+                  <td className="px-10 py-10 text-center">
+                    <div className="inline-flex items-center justify-center min-w-[40px] px-3 py-1.5 rounded-xl text-[10px] font-black bg-white/5 text-white/20 border border-white/5">
                       {aktion.pending_count}
-                    </span>
+                    </div>
                   </td>
                 </tr>
               ))}
               {(!stats.eventBreakdown || stats.eventBreakdown.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-10 py-24 text-center text-white/10 font-serif text-xl">
-                    Keine Aktionen gefunden.
+                  <td colSpan={7} className="px-10 py-32 text-center text-white/5 font-serif text-3xl tracking-tighter">
+                    Keine Daten verfügbar.
                   </td>
                 </tr>
               )}

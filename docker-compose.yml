@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET}
@@ -8,10 +10,3 @@ services:
     volumes:
       - ./data:/app/data
     restart: always
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.app.rule=Host(`jt-orga.pro`) || Host(`www.jt-orga.pro`)
-      - traefik.http.routers.app.entrypoints=websecure
-      - traefik.http.routers.app.tls=true
-      - traefik.http.routers.app.tls.certresolver=letsencrypt
-      - traefik.http.services.app.loadbalancer.server.port=3000

@@ -127,65 +127,71 @@ export default function Members() {
   };
 
   return (
-    <div className="pb-24">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-16">
-        <div>
-          <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tight mb-3">Mitglieder</h1>
-          <p className="text-white/40 font-medium text-base sm:text-lg">Verwalte dein Netzwerk und lade Personen ein.</p>
+    <div className="pb-32">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-16">
+        <div className="space-y-2">
+          <h1 className="text-5xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-none">Netzwerk</h1>
+          <p className="text-white/30 font-medium text-lg tracking-tight">Verwalte deine Mitglieder und Kontakte.</p>
         </div>
         <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
           <button
             onClick={() => setShowBulkModal(true)}
             disabled={members.length === 0}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white/5 border border-white/10 text-white/80 px-8 py-4 rounded-2xl hover:bg-white/10 hover:border-white/20 transition-all text-sm font-bold disabled:opacity-20 active:scale-[0.98]"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-surface-muted border border-white/5 text-white/60 px-8 py-5 rounded-[2rem] hover:bg-surface-elevated hover:text-white transition-all text-xs font-black uppercase tracking-widest disabled:opacity-20 active:scale-95 shadow-xl"
           >
             <CalendarPlus className="w-4 h-4" />
-            <span>Alle einladen</span>
+            <span>Multi-Invite</span>
           </button>
           <button
             onClick={openNew}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white text-black px-10 py-4 rounded-2xl hover:bg-white/90 transition-all text-sm font-bold shadow-2xl shadow-white/5"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white text-black px-10 py-5 rounded-[2rem] hover:bg-white/90 transition-all text-xs font-black uppercase tracking-widest shadow-2xl shadow-white/10 active:scale-95"
           >
             <Plus className="w-4 h-4" />
-            <span>Mitglied anlegen</span>
+            <span>Neues Mitglied</span>
           </button>
         </div>
       </div>
 
-      <div className="bg-white/[0.02] rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden">
-        <div className="divide-y divide-white/5">
+      <div className="bg-surface-muted rounded-[3rem] shadow-2xl border border-white/5 overflow-hidden">
+        <div className="divide-y divide-white/5 px-2">
           {members.map((member, i) => (
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
               key={member.id} 
-              className="p-6 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/[0.03] gap-6 sm:gap-8 transition-all duration-500 group relative overflow-hidden"
+              className="p-6 sm:p-10 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-white/[0.03] gap-8 transition-all duration-500 group relative rounded-[2rem] mx-2 my-1"
             >
-              <div className="absolute inset-y-0 left-0 w-1 bg-white opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 sm:gap-10">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-[1.5rem] sm:rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shadow-2xl group-hover:scale-105 transition-transform duration-500">
-                  {member.name.charAt(0).toUpperCase()}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-8">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 rounded-[1.8rem] bg-surface-elevated border border-white/10 flex items-center justify-center font-serif text-2xl sm:text-3xl font-bold text-white shadow-2xl group-hover:scale-105 transition-transform duration-700 relative overflow-hidden">
+                  <div className="relative z-10">{member.name.charAt(0).toUpperCase()}</div>
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
                 </div>
-                <div>
-                  <div className="font-serif text-2xl sm:text-3xl text-white group-hover:text-white transition-colors mb-2">{member.name}</div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                    {member.email && <div className="text-xs font-bold text-white/20 uppercase tracking-widest">{member.email}</div>}
-                    {member.notes && <div className="text-xs font-medium text-white/10 italic">"{member.notes}"</div>}
+                <div className="space-y-3">
+                  <div className="font-serif text-3xl sm:text-4xl text-white tracking-tighter font-bold">{member.name}</div>
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+                    {member.email && (
+                      <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-white/30 uppercase tracking-[0.2em] border border-white/5">
+                        {member.email}
+                      </div>
+                    )}
+                    {member.notes && (
+                      <div className="text-xs font-medium text-white/10 italic tracking-tight">"{member.notes}"</div>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2 mt-4 sm:mt-0 self-end sm:self-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                 <button 
                   onClick={() => openEdit(member)}
-                  className="p-4 text-white/20 hover:text-white hover:bg-white/5 rounded-2xl transition-all"
+                  className="w-12 h-12 flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 rounded-2xl transition-all active:scale-90"
                   title="Bearbeiten"
                 >
                   <Edit2 className="w-5 h-5" />
                 </button>
                 <button 
                   onClick={() => setDeleteId(member.id)}
-                  className="p-4 text-white/20 hover:text-red-400 hover:bg-red-500/5 rounded-2xl transition-all"
+                  className="w-12 h-12 flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all active:scale-90"
                   title="Löschen"
                 >
                   <Trash2 className="w-5 h-5" />
@@ -197,67 +203,72 @@ export default function Members() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="py-16 sm:py-32 px-6 text-center relative overflow-hidden"
+              className="py-32 px-10 text-center"
             >
-              <div className="w-24 h-24 bg-white/[0.02] rounded-[2rem] flex items-center justify-center mx-auto mb-10 border border-white/5 shadow-2xl">
-                <Users className="w-12 h-12 text-white/10" />
+              <div className="w-24 h-24 bg-white/[0.02] rounded-[3rem] flex items-center justify-center mx-auto mb-10 border border-white/5 shadow-2xl">
+                <Users className="w-10 h-10 text-white/10" />
               </div>
-              <p className="text-white/20 font-serif text-2xl">Noch keine Mitglieder angelegt.</p>
+              <p className="text-white/20 font-serif text-2xl tracking-tight">Noch keine Mitglieder angelegt.</p>
             </motion.div>
           )}
         </div>
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 sm:p-6 z-50 backdrop-blur-2xl">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-6 z-50 backdrop-blur-2xl">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#050505] border border-white/10 rounded-[2rem] sm:rounded-[3rem] shadow-2xl max-w-md w-full p-6 sm:p-12 relative overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-surface border-t sm:border border-white/10 rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl max-w-md w-full p-8 sm:p-12 relative overflow-hidden"
           >
-            <h2 className="text-3xl font-serif font-bold mb-10 text-white tracking-tight">{editingMember ? 'Mitglied bearbeiten' : 'Neues Mitglied'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Anzeigename</label>
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10 sm:hidden" />
+            <h2 className="text-4xl font-serif font-bold mb-12 text-white tracking-tighter shrink-0">{editingMember ? 'Mitglied' : 'Neues'} <span className="text-white/30">Hinzufügen</span></h2>
+            <form onSubmit={handleSubmit} className="space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">Anzeigename</label>
                 <input 
                   required 
                   type="text" 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all text-xl font-serif" 
+                  className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all text-2xl font-serif" 
+                  placeholder="Vorname Nachname..."
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Benutzername</label>
-                <input 
-                  type="text" 
-                  value={formData.username} 
-                  onChange={e => setFormData({...formData, username: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all" 
-                />
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">Username</label>
+                  <input 
+                    type="text" 
+                    value={formData.username} 
+                    onChange={e => setFormData({...formData, username: e.target.value})} 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all" 
+                    placeholder="@name"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">E-Mail</label>
+                  <input 
+                    type="email" 
+                    value={formData.email} 
+                    onChange={e => setFormData({...formData, email: e.target.value})} 
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all" 
+                    placeholder="mail@..."
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">E-Mail</label>
-                <input 
-                  type="email" 
-                  value={formData.email} 
-                  onChange={e => setFormData({...formData, email: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all" 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Notizen</label>
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">Interne Notizen</label>
                 <textarea 
                   value={formData.notes} 
                   onChange={e => setFormData({...formData, notes: e.target.value})} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all" 
-                  rows={3}
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all min-h-[120px] resize-none" 
+                  placeholder="Optional..."
                 ></textarea>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 pt-8">
-                <button type="button" onClick={() => setShowModal(false)} className="w-full sm:flex-1 px-8 py-5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all">Abbrechen</button>
-                <button type="submit" className="w-full sm:flex-1 px-8 py-5 bg-white text-black rounded-2xl font-bold hover:bg-white/90 transition-all">Speichern</button>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <button type="button" onClick={() => setShowModal(false)} className="w-full sm:flex-1 h-16 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all text-xs uppercase tracking-widest active:scale-95">Abbrechen</button>
+                <button type="submit" className="w-full sm:flex-1 h-16 bg-white text-black rounded-2xl font-black hover:bg-white/90 transition-all text-xs uppercase tracking-widest shadow-2xl active:scale-95">Speichern</button>
               </div>
             </form>
           </motion.div>
@@ -265,37 +276,36 @@ export default function Members() {
       )}
 
       {showBulkModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 sm:p-6 z-50 backdrop-blur-2xl">
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-6 z-50 backdrop-blur-2xl">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-[#050505] border border-white/10 rounded-[2rem] sm:rounded-[3rem] shadow-2xl max-w-md w-full p-6 sm:p-12 relative overflow-hidden"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-surface border-t sm:border border-white/10 rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl max-w-md w-full p-8 sm:p-12 relative overflow-hidden"
           >
-            <h2 className="text-3xl font-serif font-bold mb-6 flex items-center gap-4 text-white tracking-tight">
-              Alle einladen
-            </h2>
-            <p className="text-sm text-white/30 mb-10 font-medium leading-relaxed">
-              Wähle ein Aktion aus, um alle {members.length} Mitglieder dazu einzuladen. Bereits eingeladene Personen werden übersprungen.
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10 sm:hidden" />
+            <h2 className="text-4xl font-serif font-bold mb-6 text-white tracking-tighter">Alle <span className="text-white/30">Einladen</span></h2>
+            <p className="text-white/30 mb-12 font-medium tracking-tight">
+              Wähle ein Aktion aus, um alle <span className="text-white font-bold">{members.length} Mitglieder</span> dazu einzuladen.
             </p>
-            <form onSubmit={handleBulkInvite} className="space-y-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Aktion auswählen</label>
+            <form onSubmit={handleBulkInvite} className="space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">Aktion auswählen</label>
                 <select 
                   required 
                   value={selectedAktionId} 
                   onChange={e => setSelectedAktionId(e.target.value)} 
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all cursor-pointer text-lg font-serif" 
+                  className="w-full bg-white/5 border border-white/10 rounded-3xl p-6 text-white outline-none focus:ring-2 focus:ring-white/10 transition-all cursor-pointer text-xl font-serif" 
                 >
-                  <option value="" className="bg-black">Bitte wählen...</option>
+                  <option value="" className="bg-black text-white/20">Bitte wählen...</option>
                   {aktionen.map(aktion => (
                     <option key={aktion.id} value={aktion.id} className="bg-black">{aktion.title}</option>
                   ))}
                 </select>
               </div>
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button type="button" onClick={() => setShowBulkModal(false)} className="w-full sm:flex-1 px-8 py-5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all">Abbrechen</button>
-                <button type="submit" disabled={isInviting || !selectedAktionId} className="w-full sm:flex-1 px-8 py-5 bg-white text-black rounded-2xl font-bold hover:bg-white/90 transition-all disabled:opacity-20 flex items-center justify-center gap-3">
-                  {isInviting ? 'Lädt...' : 'Einladen'}
+                <button type="button" onClick={() => setShowBulkModal(false)} className="w-full sm:flex-1 h-16 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all text-xs uppercase tracking-widest active:scale-95">Abbrechen</button>
+                <button type="submit" disabled={isInviting || !selectedAktionId} className="w-full sm:flex-1 h-16 bg-white text-black rounded-2xl font-black hover:bg-white/90 transition-all disabled:opacity-20 flex items-center justify-center gap-3 text-xs uppercase tracking-widest active:scale-95">
+                  {isInviting ? 'Wird verarbeitet...' : 'Senden'}
                 </button>
               </div>
             </form>

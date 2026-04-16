@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, MapPin, Clock, ChevronRight, Edit2, Trash2, Settings, Users, CheckCircle2, Calendar, Archive, Hourglass } from 'lucide-react';
+import { Plus, MapPin, Clock, ChevronRight, Edit2, Trash2, Settings, Users, CheckCircle2, Calendar, Archive, Hourglass, UserPlus } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, parseISO, formatDistanceToNow, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -128,62 +128,64 @@ export default function Dashboard() {
 
   const renderAktionCard = (aktion: any, index: number) => (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.5, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       key={aktion.id}
     >
       <Link
         to={`/events/${aktion.id}`}
-        className="bg-white/[0.02] backdrop-blur-sm rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 p-6 sm:p-10 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-500 group flex flex-col relative overflow-hidden h-full shadow-2xl"
+        className="block bg-surface-muted rounded-[2.5rem] border border-white/5 p-6 sm:p-8 hover:bg-surface-elevated hover:border-white/10 transition-all duration-300 group relative overflow-hidden h-full active:scale-[0.98]"
       >
-        <div className="absolute top-0 left-0 w-1 h-0 bg-white group-hover:h-full transition-all duration-700" />
-        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-4">
-          <h3 className="font-serif text-2xl text-white group-hover:text-white/90 transition-colors leading-tight flex-1">
-            {aktion?.title}
-          </h3>
-          <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all z-10 shrink-0">
-            <button onClick={(e) => handleArchive(e, aktion.id, !!aktion.is_archived)} className={`p-2 bg-black/80 backdrop-blur-md border border-white/10 ${aktion.is_archived ? 'text-blue-400' : 'text-white/60'} hover:text-blue-400 rounded-full transition-colors`}>
-              <Archive className="w-4 h-4" />
-            </button>
-            <button onClick={(e) => openEdit(e, aktion)} className="p-2 bg-black/80 backdrop-blur-md border border-white/10 text-white/60 hover:text-white rounded-full transition-colors">
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteId(aktion.id); }} className="p-2 bg-black/80 backdrop-blur-md border border-white/10 text-white/60 hover:text-red-400 rounded-full transition-colors">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="space-y-4 text-sm text-white/40 flex-1">
-          <div className="flex items-center gap-4">
-            <Clock className="w-4 h-4 text-white/20" />
-            <span className="font-medium tracking-wide">{aktion?.date ? format(parseISO(aktion.date), 'EEEE, dd.MM.yyyy HH:mm', { locale: de }) : '-'}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <MapPin className="w-4 h-4 text-white/20" />
-            <span className="font-medium tracking-wide">{aktion?.location}</span>
-          </div>
-          {aktion?.response_deadline && (
-            <div className="flex items-center gap-4">
-              <Hourglass className="w-4 h-4 text-white/20" />
-              <span className="font-medium tracking-wide">
-                {aktion.response_deadline && isFuture(parseISO(aktion.response_deadline)) 
-                  ? `Frist: ${formatDistanceToNow(parseISO(aktion.response_deadline), { addSuffix: true, locale: de })}`
-                  : aktion.response_deadline ? 'Frist abgelaufen' : ''}
-              </span>
+        <div className="flex flex-col gap-6 h-full">
+          <div className="flex justify-between items-start gap-4">
+            <div className="space-y-1 flex-1">
+              <h3 className="font-serif text-2xl text-white group-hover:text-white transition-colors leading-tight">
+                {aktion?.title}
+              </h3>
+              <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest">
+                <Clock className="w-3.5 h-3.5" />
+                <span>{aktion?.date ? format(parseISO(aktion.date), 'EEEE, dd. MMM', { locale: de }) : '-'}</span>
+              </div>
             </div>
-          )}
-          <div className="flex items-center gap-4 pt-6 mt-6 border-t border-white/5">
-            <Users className="w-4 h-4 text-white/20" />
-            <span className="text-white/80 font-medium tracking-wide">
-              {aktion?.yes_count || 0} Zusagen <span className="text-white/20 font-normal ml-1">/ {aktion?.total_invites || 0}</span>
-            </span>
+            <div className="flex gap-2 shrink-0">
+              <button onClick={(e) => handleArchive(e, aktion.id, !!aktion.is_archived)} className={`w-9 h-9 flex items-center justify-center bg-white/5 border border-white/5 ${aktion.is_archived ? 'text-blue-400' : 'text-white/40'} hover:text-blue-400 rounded-full transition-all active:scale-90`}>
+                <Archive className="w-4 h-4" />
+              </button>
+              <button onClick={(e) => openEdit(e, aktion)} className="w-9 h-9 flex items-center justify-center bg-white/5 border border-white/5 text-white/40 hover:text-white rounded-full transition-all active:scale-90">
+                <Edit2 className="w-4 h-4" />
+              </button>
+              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteId(aktion.id); }} className="w-9 h-9 flex items-center justify-center bg-white/5 border border-white/5 text-white/40 hover:text-red-400 rounded-full transition-all active:scale-90">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
-        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between text-xs font-bold uppercase tracking-widest text-white/30 group-hover:text-white/60 transition-colors">
-          <span>Details ansehen</span>
-          <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+          
+          <div className="space-y-3 flex-1">
+            <div className="flex items-center gap-3 text-sm text-white/40">
+              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                <MapPin className="w-4 h-4 text-white/20" />
+              </div>
+              <span className="font-medium truncate">{aktion?.location}</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-white/40">
+              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
+                <Users className="w-4 h-4 text-white/20" />
+              </div>
+              <div className="font-medium text-white/80">
+                {aktion?.yes_count || 0} <span className="text-white/20 font-normal">Zusagen von</span> {aktion?.total_invites || 0}
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-5 border-t border-white/5 flex items-center justify-between">
+            <div className="px-4 py-2 rounded-full bg-white/5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30 group-hover:bg-white/10 group-hover:text-white transition-all">
+              Details ansehen
+            </div>
+            <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white text-black transition-all transform group-hover:translate-x-1">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
         </div>
       </Link>
     </motion.div>
@@ -191,164 +193,205 @@ export default function Dashboard() {
 
   return (
     <div className="pb-24">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-8 mb-16">
-        <div>
-          <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tight mb-3">Aktionen</h1>
-          <p className="text-white/40 font-medium text-base sm:text-lg">Verwalte deine Veranstaltungen und Teilnehmer.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-20 px-2 lg:px-0">
+        <div className="space-y-2">
+          <h1 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.5em] mb-4">Übersicht</h1>
+          <h2 className="text-4xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-[0.9]">Aktionen</h2>
+          <p className="text-white/40 font-medium text-lg max-w-md leading-relaxed">Verwalte deine Veranstaltungen, Mitglieder und Teilnehmer im Netzwerk.</p>
         </div>
-        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <button
             onClick={() => setShowSettings(true)}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white/5 border border-white/10 text-white/80 px-8 py-4 rounded-2xl hover:bg-white/10 transition-all text-sm font-bold"
+            className="w-12 h-12 flex items-center justify-center bg-white/5 border border-white/5 text-white/80 rounded-2xl hover:bg-white/10 transition-all active:scale-90"
+            title="Einstellungen"
           >
-            <Settings className="w-4 h-4" />
-            <span>Einstellungen</span>
+            <Settings className="w-5 h-5" />
           </button>
           <button
             onClick={openNew}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white text-black px-10 py-4 rounded-2xl hover:bg-white/90 transition-all text-sm font-bold shadow-2xl shadow-white/5 active:scale-[0.98]"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white text-black px-10 h-14 rounded-2xl hover:bg-white/90 transition-all text-sm font-bold shadow-2xl shadow-white/5 active:scale-[0.95]"
           >
             <Plus className="w-4 h-4" />
-            <span>Neue Aktion</span>
+            <span>Neu erstellen</span>
           </button>
         </div>
       </div>
 
+      {stats?.pending_requests > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-16"
+        >
+          <Link 
+            to="/registration-requests"
+            className="flex items-center justify-between p-6 bg-white/[0.03] border border-white/10 rounded-[2.5rem] hover:bg-white/[0.05] transition-all group overflow-hidden relative shadow-2xl active:scale-[0.98]"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full -mr-10 -mt-10 blur-2xl" />
+            <div className="flex items-center gap-6 relative z-10">
+              <div className="w-16 h-16 bg-white rounded-[1.5rem] flex items-center justify-center shadow-2xl shadow-white/20 animate-pulse">
+                <UserPlus className="w-7 h-7 text-black" />
+              </div>
+              <div>
+                <h3 className="text-xl font-serif font-bold text-white mb-1">Registrierungsanfragen</h3>
+                <p className="text-sm text-white/40 font-medium tracking-tight">Es warten {stats.pending_requests} Person(en) auf Freischaltung.</p>
+              </div>
+            </div>
+            <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:translate-x-1 transition-transform bg-white/5 group-hover:bg-white group-hover:text-black">
+              <ChevronRight className="w-5 h-5" />
+            </div>
+          </Link>
+        </motion.div>
+      )}
+
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
           {[
-            { label: 'Aktionen', value: stats.events },
-            { label: 'Archiviert', value: stats.archived_events, sub: `${stats.archived_pct.toFixed(1)}%` },
-            { label: 'Personen', value: stats.persons },
-            { label: 'Einladungen', value: stats.invites },
+            { label: 'Aktionen', value: stats.events, icon: Calendar },
+            { label: 'Personen', value: stats.persons, icon: Users },
+            { label: 'Einladungen', value: stats.invites, icon: CheckCircle2 },
+            { label: 'Archiviert', value: stats.archived_events, sub: `${stats.archived_pct.toFixed(0)}%`, icon: Archive },
           ].map((stat, i) => (
             <motion.div 
               key={i}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="bg-white/[0.02] p-6 sm:p-10 rounded-[2rem] sm:rounded-[2.5rem] border border-white/5 shadow-2xl"
+              transition={{ delay: i * 0.08 }}
+              className="bg-surface-muted p-8 rounded-[2.5rem] border border-white/5 shadow-2xl hover:bg-surface-elevated transition-colors group cursor-default"
             >
-              <div className="text-white/20 text-[10px] uppercase tracking-[0.3em] font-bold mb-4 sm:mb-6">{stat.label}</div>
-              <div className="flex items-baseline gap-2 sm:gap-3">
-                <div className="text-3xl sm:text-5xl font-serif font-bold text-white">{stat.value}</div>
-                {stat.sub && <div className="text-xs font-bold text-white/20">{stat.sub}</div>}
+              <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-center">
+                  <div className="text-white/20 text-[10px] uppercase font-black tracking-[0.3em]">{stat.label}</div>
+                  <stat.icon className="w-4 h-4 text-white/10 group-hover:text-white/40 transition-colors" />
+                </div>
+                <div className="flex items-baseline gap-3">
+                  <div className="text-4xl sm:text-6xl font-serif font-bold text-white tracking-tighter">{stat.value}</div>
+                  {stat.sub && <div className="text-xs font-bold text-white/20 bg-white/5 px-2 py-1 rounded-lg">{stat.sub}</div>}
+                </div>
               </div>
             </motion.div>
           ))}
         </div>
       )}
 
-      {upcomingAktionen.length > 0 && (
-        <section className="mb-24">
-          <div className="flex items-center gap-6 mb-12">
-            <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
-              <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
-              Anstehend
-            </h2>
-            <div className="h-px flex-1 bg-white/5" />
-          </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {upcomingAktionen.map((e, i) => renderAktionCard(e, i))}
-          </div>
-        </section>
-      )}
+      <div className="space-y-32">
+        {upcomingAktionen.length > 0 && (
+          <section>
+            <div className="flex items-center gap-6 mb-12 px-2 lg:px-0">
+              <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)] animate-pulse" />
+                Anstehend
+              </h2>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {upcomingAktionen.map((e, i) => renderAktionCard(e, i))}
+            </div>
+          </section>
+        )}
 
-      {pastAktionen.length > 0 && (
-        <section className="mb-24 opacity-40 hover:opacity-100 transition-opacity duration-700">
-          <div className="flex items-center gap-6 mb-12">
-            <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
-              Vergangen
-            </h2>
-            <div className="h-px flex-1 bg-white/5" />
-          </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {pastAktionen.map((e, i) => renderAktionCard(e, i))}
-          </div>
-        </section>
-      )}
+        {pastAktionen.length > 0 && (
+          <section className="opacity-60 hover:opacity-100 transition-opacity duration-500">
+            <div className="flex items-center gap-6 mb-12 px-2 lg:px-0">
+              <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
+                Vergangen
+              </h2>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {pastAktionen.map((e, i) => renderAktionCard(e, i))}
+            </div>
+          </section>
+        )}
 
-      {archivedAktionen.length > 0 && (
-        <section className="opacity-20 hover:opacity-100 transition-opacity duration-700">
-          <div className="flex items-center gap-6 mb-12">
-            <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
-              Archiviert
-            </h2>
-            <div className="h-px flex-1 bg-white/5" />
-          </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {archivedAktionen.map((e, i) => renderAktionCard(e, i))}
-          </div>
-        </section>
-      )}
+        {archivedAktionen.length > 0 && (
+          <section className="opacity-40 hover:opacity-100 transition-opacity duration-500">
+            <div className="flex items-center gap-6 mb-12 px-2 lg:px-0">
+              <h2 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em] flex items-center gap-4 shrink-0">
+                Archiviert
+              </h2>
+              <div className="h-px flex-1 bg-white/5" />
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {archivedAktionen.map((e, i) => renderAktionCard(e, i))}
+            </div>
+          </section>
+        )}
+      </div>
 
       {aktionen.length === 0 && (
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="col-span-full text-center py-16 sm:py-32 px-6 bg-white/[0.02] rounded-[2rem] sm:rounded-[3rem] border border-dashed border-white/10 backdrop-blur-xl relative overflow-hidden"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-32 px-10 bg-white/[0.01] rounded-[3rem] border border-dashed border-white/5 backdrop-blur-3xl relative overflow-hidden"
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
-          <motion.div 
-            initial={{ scale: 0, rotate: -10 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: 'spring', damping: 15, delay: 0.2 }}
-            className="w-24 h-24 bg-white/5 backdrop-blur-xl rounded-[2rem] flex items-center justify-center mx-auto mb-10 border border-white/5 shadow-2xl"
-          >
-            <Calendar className="w-12 h-12 text-white/20" />
-          </motion.div>
-          <p className="text-white/40 mb-10 text-xl font-serif">Noch keine Aktionen erstellt.</p>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto mb-8 border border-white/5">
+            <Calendar className="w-10 h-10 text-white/10" />
+          </div>
+          <p className="text-white/30 mb-10 text-xl font-serif">Noch keine Aktionen vorhanden.</p>
+          <button
             onClick={openNew}
-            className="text-white font-bold hover:text-white/80 transition-colors inline-flex items-center gap-3 text-sm uppercase tracking-widest"
+            className="bg-white text-black px-10 h-14 rounded-2xl font-bold hover:bg-white/90 transition-all shadow-2xl shadow-white/5 active:scale-[0.95]"
           >
-            Erste Aktion anlegen <ChevronRight className="w-4 h-4" />
-          </motion.button>
+            Erste Aktion erstellen
+          </button>
         </motion.div>
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 sm:p-6 z-50 backdrop-blur-2xl">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-0 sm:p-6 z-[100] backdrop-blur-3xl">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: "100%" }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#050505] border border-white/10 rounded-[2rem] sm:rounded-[3rem] shadow-2xl max-w-xl w-full p-6 sm:p-12 max-h-[90vh] overflow-y-auto relative overflow-hidden"
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="bg-surface border-t sm:border border-white/10 rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl max-w-2xl w-full p-8 sm:p-14 h-[95vh] sm:h-auto overflow-y-auto relative"
           >
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold mb-8 sm:mb-10 text-white tracking-tight">{editingAktion ? 'Aktion bearbeiten' : 'Neue Aktion'}</h2>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Titel</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all text-xl font-serif" placeholder="z.B. Wanderung im Taunus" />
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-10 sm:hidden" />
+            <div className="flex justify-between items-center mb-12">
+              <h2 className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tighter shrink-0">{editingAktion ? 'Aktion' : 'Neue'} <span className="text-white/30">Bearbeiten</span></h2>
+              <button onClick={() => setShowModal(false)} className="w-12 h-12 flex items-center justify-center bg-white/5 rounded-full hover:bg-white/10 transition-all active:scale-90">
+                <Trash2 className="w-5 h-5 opacity-0 pointer-events-none" /> {/* Hidden spacing or close icon */}
+                <div className="text-xl font-light">×</div>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-10">
+              <div className="space-y-4">
+                <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Event Bezeichnung</label>
+                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all text-2xl font-serif placeholder:text-white/5" placeholder="Name der Aktion..." />
               </div>
-              <div className="grid sm:grid-cols-2 gap-8">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Datum & Uhrzeit</label>
-                  <input required type="datetime-local" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all [color-scheme:dark]" />
+              
+              <div className="grid sm:grid-cols-2 gap-10">
+                <div className="space-y-4">
+                  <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Datum & Zeit</label>
+                  <input required type="datetime-local" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all [color-scheme:dark]" />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Ort</label>
-                  <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" />
+                <div className="space-y-4">
+                  <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Standort</label>
+                  <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all" placeholder="Ort eingeben..." />
                 </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Treffpunkt (optional)</label>
-                <input type="text" value={formData.meeting_point} onChange={e => setFormData({...formData, meeting_point: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" placeholder="z.B. Parkplatz am Zoo" />
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Konkreter Treffpunkt</label>
+                <input type="text" value={formData.meeting_point} onChange={e => setFormData({...formData, meeting_point: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all" placeholder="Optional: Genauer Treffpunkt..." />
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Beschreibung (optional)</label>
-                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all" rows={4}></textarea>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Zusätzliche Infos</label>
+                <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all min-h-[150px] resize-none" placeholder="Details zur Aktion..."></textarea>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-white/20 uppercase tracking-widest ml-1">Antwortfrist (optional)</label>
-                <input type="datetime-local" value={formData.response_deadline} onChange={e => setFormData({...formData, response_deadline: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all [color-scheme:dark]" />
-                <p className="text-[10px] text-white/20 mt-3 font-medium ml-1">Nach diesem Datum können Teilnehmer nicht mehr antworten.</p>
+
+              <div className="space-y-4 p-8 bg-white/[0.02] border border-white/5 rounded-3xl">
+                <label className="text-[10px] font-extrabold text-white/40 uppercase tracking-[0.3em] ml-1">Rückmeldefrist</label>
+                <input type="datetime-local" value={formData.response_deadline} onChange={e => setFormData({...formData, response_deadline: e.target.value})} className="w-full bg-black/40 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all [color-scheme:dark]" />
+                <p className="text-[10px] text-white/20 mt-4 leading-relaxed tracking-wider">Nach Ablauf dieser Frist können Teilnehmer ihren Status im System nicht mehr selbstständig ändern.</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-4 pt-8">
-                <button type="button" onClick={() => setShowModal(false)} className="w-full sm:flex-1 px-8 py-5 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all">Abbrechen</button>
-                <button type="submit" className="w-full sm:flex-1 px-8 py-5 bg-white text-black rounded-2xl font-bold hover:bg-white/90 transition-all">Speichern</button>
+
+              <div className="flex flex-col sm:flex-row gap-4 py-10">
+                <button type="button" onClick={() => setShowModal(false)} className="w-full sm:flex-1 h-16 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all text-sm uppercase tracking-widest active:scale-95">Abbrechen</button>
+                <button type="submit" className="w-full sm:flex-1 h-16 bg-white text-black rounded-2xl font-bold hover:bg-white/90 transition-all text-sm uppercase tracking-widest shadow-2xl shadow-white/10 active:scale-95">Änderungen speichern</button>
               </div>
             </form>
           </motion.div>
@@ -357,8 +400,8 @@ export default function Dashboard() {
 
       <ConfirmModal 
         isOpen={deleteId !== null}
-        title="Aktion löschen"
-        message="Möchtest du diese Aktion wirklich löschen? Alle Einladungen und Antworten werden ebenfalls unwiderruflich gelöscht."
+        title="Aktion unwiderruflich löschen?"
+        message="Bist du sicher? Alle damit verbundenen Daten, Einladungen und Statistiken gehen verloren."
         onConfirm={handleDelete}
         onCancel={() => setDeleteId(null)}
       />

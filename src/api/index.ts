@@ -117,6 +117,17 @@ const setupProfileSchema = z.object({
   password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen lang sein')
 });
 
+const registrationRequestSchema = z.object({
+  name: z.string().min(2, 'Name ist zu kurz'),
+  email: z.string().email('Ungültige E-Mail Adresse').optional().or(z.literal(''))
+});
+
+const registerWithCodeSchema = z.object({
+  code: z.string().min(1, 'Code ist erforderlich'),
+  username: z.string().min(3, 'Benutzername muss mindestens 3 Zeichen lang sein'),
+  password: z.string().min(8, 'Passwort muss mindestens 8 Zeichen lang sein')
+});
+
 // --- AUTH ROUTES ---
 const authRouter = Router();
 authRouter.post('/login', loginLimiter, (req, res) => {
@@ -473,6 +484,7 @@ adminRouter.get('/stats', (req, res) => {
   }));
 
   const archivedEvents = db.prepare('SELECT COUNT(*) as count FROM events WHERE is_archived = 1').get() as any;
+  const pendingRequests = db.prepare("SELECT COUNT(*) as count FROM registration_requests WHERE status = 'pending'").get() as any;
 
   res.json({
     events: totalEvents.count,
@@ -480,6 +492,7 @@ adminRouter.get('/stats', (req, res) => {
     archived_pct: totalEvents.count > 0 ? (archivedEvents.count / totalEvents.count) * 100 : 0,
     persons: totalPersons.count,
     invites: totalInvites.count,
+    pending_requests: pendingRequests.count,
     eventBreakdown
   });
 });
@@ -488,6 +501,36 @@ adminRouter.get('/stats', (req, res) => {
 adminRouter.get('/notifications', (req, res) => {
   const notifs = db.prepare("SELECT * FROM notifications WHERE user_type = 'admin' ORDER BY created_at DESC LIMIT 50").all();
   res.json(notifs);
+});
+
+// Registration Requests
+adminRouter.get('/registration-requests', (req, res) => {
+  const requests = db.prepare('SELECT * FROM registration_requests ORDER BY created_at DESC').all();
+  res.json(requests);
+});
+
+adminRouter.put('/registration-requests/:id/approve', (req, res) => {
+  try {
+    const code = crypto.randomBytes(8).toString('hex').toUpperCase();
+    db.prepare("UPDATE registration_requests SET status = 'approved', code = ? WHERE id = ?").run(code, req.params.id);
+    
+    // Notify the user if we had a way (for now just in DB)
+    const request = db.prepare('SELECT * FROM registration_requests WHERE id = ?').get(req.params.id) as any;
+    
+    res.json({ success: true, code });
+  } catch (e: any) {
+    res.status(400).json({ error: 'Fehler beim Genehmigen' });
+  }
+});
+
+adminRouter.put('/registration-requests/:id/reject', (req, res) => {
+  db.prepare("UPDATE registration_requests SET status = 'rejected' WHERE id = ?").run(req.params.id);
+  res.json({ success: true });
+});
+
+adminRouter.delete('/registration-requests/:id', (req, res) => {
+  db.prepare('DELETE FROM registration_requests WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
 });
 
 adminRouter.put('/notifications/:id/read', (req, res) => {
@@ -556,6 +599,58 @@ apiRouter.use('/admin', adminRouter);
 // --- PUBLIC ROUTES ---
 const publicRouter = Router();
 
+publicRouter.post('/registration-request', (req, res) => {
+  try {
+    const { name, email } = registrationRequestSchema.parse(req.body);
+    db.prepare("INSERT INTO registration_requests (name, email) VALUES (?, ?)").run(name, email || null);
+    
+    // Notify admin
+    db.prepare(`
+      INSERT INTO notifications (user_type, title, message, link)
+      VALUES ('admin', 'Neue Registrierungsanfrage', ?, '/registration-requests')
+    `).run(`${name} möchte Mitglied werden.`);
+
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
+  }
+});
+
+publicRouter.post('/register', (req, res) => {
+  try {
+    const { code, username, password } = registerWithCodeSchema.parse(req.body);
+    
+    const request = db.prepare("SELECT * FROM registration_requests WHERE code = ? AND status = 'approved'").get(code) as any;
+    if (!request) {
+      return res.status(400).json({ error: 'Ungültiger oder nicht genehmigter Registrierungscode' });
+    }
+
+    const hash = bcrypt.hashSync(password, 10);
+    
+    db.transaction(() => {
+      // Create person
+      const info = db.prepare('INSERT INTO persons (name, username, email, password_hash) VALUES (?, ?, ?, ?)').run(request.name, username, request.email, hash);
+      const personId = info.lastInsertRowid;
+      
+      // Mark request as used (or delete it)
+      db.prepare('DELETE FROM registration_requests WHERE id = ?').run(request.id);
+      
+      // Notify admin about new sign up
+      db.prepare(`
+        INSERT INTO notifications (user_type, title, message, link)
+        VALUES ('admin', 'Neues Mitglied registriert', ?, '/persons')
+      `).run(`${request.name} (@${username}) hat sich erfolgreich registriert.`);
+    })();
+
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ error: 'Benutzername ist bereits vergeben' });
+    }
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
+  }
+});
+
 publicRouter.post('/login', loginLimiter, (req, res) => {
   try {
     const { username, password } = loginSchema.parse(req.body);
@@ -592,7 +687,7 @@ publicRouter.get('/check', requirePersonAuth, (req: any, res) => {
 publicRouter.get('/dashboard', requirePersonAuth, (req: any, res) => {
   const personId = req.person.id;
   const invitations = db.prepare(`
-    SELECT i.*, e.title, e.date, e.location, e.description, e.response_deadline
+    SELECT i.*, e.title, e.date, e.location, e.description, e.response_deadline, e.meeting_point
     FROM invitees i
     JOIN events e ON i.event_id = e.id
     WHERE i.person_id = ?
@@ -611,12 +706,29 @@ publicRouter.get('/invite/:token', (req, res) => {
   
   if (!invitee) return res.status(404).json({ error: 'Einladung nicht gefunden' });
 
-  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(invitee.event_id);
+  const event = db.prepare('SELECT * FROM events WHERE id = ?').get(invitee.event_id) as any;
   if (!event) return res.status(404).json({ error: 'Event nicht gefunden' });
+
+  // Get other participants
+  const participants = db.prepare(`
+    SELECT p.name, i.status, i.guests_count
+    FROM invitees i
+    JOIN persons p ON i.person_id = p.id
+    WHERE i.event_id = ? AND i.id != ? AND i.status IS NOT NULL AND i.status != 'pending'
+    ORDER BY 
+      CASE i.status 
+        WHEN 'yes' THEN 1 
+        WHEN 'maybe' THEN 2 
+        WHEN 'no' THEN 3 
+        ELSE 4 
+      END,
+      p.name ASC
+  `).all(event.id, invitee.id);
 
   res.json({ 
     invitee: { ...invitee, has_profile: !!invitee.has_profile }, 
-    event 
+    aktion: event,
+    participants
   });
 });
 

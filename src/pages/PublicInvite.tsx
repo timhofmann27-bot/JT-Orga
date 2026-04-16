@@ -382,6 +382,38 @@ export default function PublicInvite() {
           )}
         </motion.form>
 
+        {/* Participants List */}
+        {data?.participants && data.participants.length > 0 && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }} 
+            className="bg-white/[0.02] rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-white/5 p-8 sm:p-12 relative overflow-hidden"
+          >
+            <h2 className="text-3xl font-serif font-bold text-white mb-8 tracking-tight relative z-10 flex items-center gap-4">
+              <Users className="w-8 h-8 text-white/40" />
+              Wer ist noch dabei?
+            </h2>
+            <div className="grid gap-3 relative z-10">
+              {data.participants.map((p: any, i: number) => (
+                <div key={i} className="flex flex-wrap items-center justify-between gap-4 p-5 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-serif font-bold text-white/60">
+                      {p.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="font-bold text-white text-lg font-serif">{p.name}</div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {p.status === 'yes' && <span className="flex items-center gap-2 text-[10px] font-bold text-green-400 bg-green-500/10 border border-green-500/20 px-4 py-2 rounded-full uppercase tracking-widest"><CheckCircle className="w-4 h-4" /> Dabei {p.guests_count > 0 && `(+${p.guests_count})`}</span>}
+                    {p.status === 'maybe' && <span className="flex items-center gap-2 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2 rounded-full uppercase tracking-widest"><HelpCircle className="w-4 h-4" /> Vielleicht</span>}
+                    {p.status === 'no' && <span className="flex items-center gap-2 text-[10px] font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-full uppercase tracking-widest"><XCircle className="w-4 h-4" /> Abgesagt</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* Profile Setup / Dashboard Link */}
         {!invitee.has_profile ? (
           <motion.div 
