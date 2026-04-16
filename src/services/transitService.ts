@@ -1,7 +1,10 @@
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 
+/**
+ * Core transit interfaces for consistent data handling across UI
+ */
 export interface TransitLeg {
-  mode: 'train' | 'bus' | 'walk' | 'subway' | 'tram';
+  mode: 'train' | 'bus' | 'walk' | 'subway' | 'tram' | 'ferry';
   line?: string;
   departure: string;
   arrival: string;
@@ -18,26 +21,43 @@ export interface TransitConnection {
   price?: string;
 }
 
-export async function fetchTransitConnections(from: string, to: string): Promise<TransitConnection[]> {
-  try {
+/**
+ * Abstract Transit Provider Interface
+ * Allows swapping between DB, VBB, OTP, or Google Maps without changing the UI
+ */
+export interface TransitProvider {
+  fetchJourneys(from: string, to: string, when?: string): Promise<TransitConnection[]>;
+}
+
+/**
+ * HAFAS / transport.rest Provider Implementation (Default)
+ * Optimized for EU / DE context
+ */
+class HafasProvider implements TransitProvider {
+  async fetchJourneys(from: string, to: string, when?: string): Promise<TransitConnection[]> {
     const params = new URLSearchParams();
-    params.append('results', '3');
+    params.append('results', '4');
     params.append('stopovers', 'false');
 
-    // Helper to detect coordinates
-    const isCoords = (str: string) => /^-?\d+(\.\d+)?,-?\d+(\.\d+)?$/.test(str);
+    if (when) {
+      params.append('when', when);
+    }
+
+    // Helper to detect coordinates (handles potential spaces)
+    const coordRegex = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/;
+    const isCoords = (str: string) => coordRegex.test(str);
 
     if (isCoords(from)) {
-      const [lat, lon] = from.split(',');
+      const [lat, lon] = from.split(',').map(s => s.trim());
       params.append('from.latitude', lat);
       params.append('from.longitude', lon);
-      params.append('from.name', 'Aktueller Standort');
+      params.append('from.name', 'Start');
     } else {
       params.append('from', from);
     }
 
     if (isCoords(to)) {
-      const [lat, lon] = to.split(',');
+      const [lat, lon] = to.split(',').map(s => s.trim());
       params.append('to.latitude', lat);
       params.append('to.longitude', lon);
       params.append('to.name', 'Ziel');
@@ -45,19 +65,24 @@ export async function fetchTransitConnections(from: string, to: string): Promise
       params.append('to', to);
     }
 
-    const response = await fetch(`https://v6.db.transport.rest/journeys?${params.toString()}`);
+    // Switch to VBB as primary request from the Principal Engineer prompt
+    const response = await fetch(`https://v6.vbb.transport.rest/journeys?${params.toString()}`);
     
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      console.warn('Transit API Error:', errData);
-      throw new Error(errData.message || 'Route could not be calculated');
+      // Fallback to DB if VBB fails for outside-Berlin locations
+      const dbResponse = await fetch(`https://v6.db.transport.rest/journeys?${params.toString()}`);
+      if (!dbResponse.ok) {
+        const errData = await dbResponse.json().catch(() => ({}));
+        throw new Error(errData.message || 'Keine Route gefunden');
+      }
+      return this.parseResponse(await dbResponse.json());
     }
     
-    const data = await response.json();
-    
-    if (!data.journeys || data.journeys.length === 0) {
-      return [];
-    }
+    return this.parseResponse(await response.json());
+  }
+
+  private parseResponse(data: any): TransitConnection[] {
+    if (!data.journeys || data.journeys.length === 0) return [];
 
     return data.journeys.map((j: any) => {
       const dep = parseISO(j.legs[0].departure);
@@ -70,7 +95,7 @@ export async function fetchTransitConnections(from: string, to: string): Promise
         duration: Math.round((arr.getTime() - dep.getTime()) / 60000),
         transfers: j.legs.filter((l: any) => l.mode !== 'walking').length - 1,
         legs: j.legs.map((l: any) => ({
-          mode: l.mode === 'walking' ? 'walk' : (l.line?.product || 'bus'),
+          mode: l.mode === 'walking' ? 'walk' : (l.line?.product || 'tram'),
           line: l.line?.name || l.line?.label,
           departure: l.departure,
           arrival: l.arrival,
@@ -79,9 +104,19 @@ export async function fetchTransitConnections(from: string, to: string): Promise
         price: j.price?.amount ? `${j.price.amount} ${j.price.currency}` : undefined
       };
     });
-  } catch (error) {
-    console.error('Transit fetch error:', error);
-    // Return empty array for fallback to trigger "No connection found"
-    return [];
   }
+}
+
+/**
+ * Service Factory (Singleton)
+ * Easily switch providers here
+ */
+const activeProvider: TransitProvider = new HafasProvider();
+
+/**
+ * Main Public API
+ */
+export async function fetchTransitConnections(from: string, to: string, when?: string): Promise<TransitConnection[]> {
+  // Logic is completely encapsulated in provider
+  return activeProvider.fetchJourneys(from, to, when);
 }

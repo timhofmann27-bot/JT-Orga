@@ -20,6 +20,8 @@ interface TransitPlannerProps {
 export default function TransitPlanner({ isOpen, onClose, destination, destinationName }: TransitPlannerProps) {
   const [startPoint, setStartPoint] = useState('');
   const [useCurrentLocation, setUseCurrentLocation] = useState(true);
+  const [departureTime, setDepartureTime] = useState<string>(''); // ISO string or empty for "now"
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [connections, setConnections] = useState<TransitConnection[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
       case 'bus': return <Bus className="w-4 h-4" />;
       case 'walk': return <Walk className="w-4 h-4" />;
       case 'tram': return <Tram className="w-4 h-4" />;
+      case 'subway': return <Train className="w-4 h-4 text-emerald-400" />;
       default: return <Bus className="w-4 h-4" />;
     }
   };
@@ -38,9 +41,9 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
     setLoading(true);
     setError(null);
     try {
-      const routes = await fetchTransitConnections(start, destination);
+      const routes = await fetchTransitConnections(start, destination, departureTime || undefined);
       if (routes.length === 0) {
-        setError('Keine Verbindung gefunden. Probiere es mit einem anderen Startpunkt.');
+        setError('Keine Verbindung gefunden. Probiere es mit einem anderen Startpunkt oder Zeitpunkt.');
       } else {
         setConnections(routes);
       }
@@ -67,19 +70,31 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
         findRoutes(start);
       },
       (err) => {
-        console.error(err);
-        toast.error('Standortzugriff verweigert');
+        console.error('Geolocation error:', err);
+        const msg = err.code === 1 ? 'Standortzugriff verweigert' : 'Standort konnte nicht ermittelt werden';
+        toast.error(msg);
         setUseCurrentLocation(false);
         setLoading(false);
-      }
+      },
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
   useEffect(() => {
-    if (isOpen && useCurrentLocation && !startPoint) {
-      handleGetCurrentLocation();
+    if (isOpen) {
+      if (useCurrentLocation) {
+        handleGetCurrentLocation();
+      } else if (startPoint) {
+        findRoutes(startPoint);
+      }
+    } else {
+      // Clear results on close to avoid stale data next time
+      setConnections([]);
+      setError(null);
+      setDepartureTime('');
+      setShowTimePicker(false);
     }
-  }, [isOpen]);
+  }, [isOpen, destination]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,37 +155,104 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
               </div>
 
               {/* Start Input */}
-              <form onSubmit={handleSearch} className="relative">
-                <input 
-                  type="text"
-                  placeholder="Startort eingeben..."
-                  value={startPoint}
-                  onChange={(e) => {
-                    setStartPoint(e.target.value);
-                    setUseCurrentLocation(false);
-                  }}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white placeholder:text-white/10 focus:ring-2 focus:ring-white/10 outline-none transition-all font-medium"
-                />
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                {!useCurrentLocation && (
+              <div className="space-y-4">
+                <form onSubmit={handleSearch} className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Startort eingeben..."
+                    value={startPoint}
+                    onChange={(e) => {
+                      setStartPoint(e.target.value);
+                      setUseCurrentLocation(false);
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white placeholder:text-white/10 focus:ring-2 focus:ring-white/10 outline-none transition-all font-medium"
+                  />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+                  {!useCurrentLocation && (
+                    <button 
+                      type="button"
+                      onClick={handleGetCurrentLocation}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
+                      title="Aktuellen Standort nutzen"
+                    >
+                      <Navigation className="w-4 h-4" />
+                    </button>
+                  )}
+                </form>
+
+                <div className="flex flex-col gap-3">
                   <button 
-                    type="button"
-                    onClick={handleGetCurrentLocation}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors"
-                    title="Aktuellen Standort nutzen"
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                    className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors ml-1 active:scale-95"
                   >
-                    <Navigation className="w-4 h-4" />
+                    <Clock className="w-3.5 h-3.5" />
+                    {departureTime ? (
+                      <span className="text-white">Abfahrt: {format(parseISO(departureTime), 'dd.MM. HH:mm')}</span>
+                    ) : (
+                      'Abfahrt: Jetzt'
+                    )}
                   </button>
-                )}
-              </form>
+
+                  <AnimatePresence>
+                    {showTimePicker && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden space-y-4"
+                      >
+                        <div className="flex gap-2">
+                          <input 
+                            type="datetime-local"
+                            value={departureTime}
+                            onChange={(e) => {
+                              setDepartureTime(e.target.value);
+                              if (startPoint) findRoutes(startPoint);
+                            }}
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white text-xs outline-none focus:ring-2 focus:ring-white/10 transition-all [color-scheme:dark]"
+                          />
+                          {departureTime && (
+                            <button 
+                              onClick={() => {
+                                setDepartureTime('');
+                                if (startPoint) findRoutes(startPoint);
+                              }}
+                              className="px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-all"
+                            >
+                              Jetzt
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
 
             {/* Results */}
             <div className="flex-1 overflow-y-auto p-8 sm:p-10 space-y-6">
               {loading ? (
-                <div className="py-20 flex flex-col items-center gap-4">
-                  <Loader2 className="w-8 h-8 text-white/20 animate-spin" />
-                  <p className="text-white/20 font-black text-[10px] uppercase tracking-widest">Suche beste Verbindungen...</p>
+                <div className="space-y-6">
+                  <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-4">Suche Verbindungen...</div>
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 animate-pulse">
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex gap-2">
+                          <div className="w-16 h-6 bg-white/5 rounded-lg" />
+                          <div className="w-16 h-6 bg-white/5 rounded-lg" />
+                        </div>
+                        <div className="space-y-2">
+                          <div className="w-24 h-8 bg-white/5 rounded-lg" />
+                          <div className="w-16 h-3 bg-white/5 rounded-lg ml-auto" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                        <div className="w-32 h-3 bg-white/5 rounded-lg" />
+                        <div className="w-24 h-10 bg-white/5 rounded-xl" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : error ? (
                 <div className="py-20 text-center space-y-8">
@@ -235,14 +317,25 @@ export default function TransitPlanner({ isOpen, onClose, destination, destinati
                           <Clock className="w-3.5 h-3.5 text-white/20" />
                           <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Abfahrt in {Math.round((parseISO(c.departure).getTime() - Date.now()) / 60000)} Min</span>
                         </div>
-                        <a 
-                          href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint === 'Aktueller Standort' ? 'current location' : startPoint)}&destination=${encodeURIComponent(destination)}&travelmode=transit`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/90 transition-all shadow-xl shadow-white/5"
-                        >
-                          Öffnen <ExternalLink className="w-3 h-3" />
-                        </a>
+                        <div className="flex items-center gap-3">
+                          <a 
+                            href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(startPoint === 'Aktueller Standort' ? 'current location' : startPoint)}&destination=${encodeURIComponent(destination)}&travelmode=transit`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/90 transition-all shadow-xl shadow-white/5"
+                          >
+                            Navigieren <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                          <a 
+                            href={`https://reiseauskunft.bahn.de/bin/query.exe/dn?start=yes&S=${encodeURIComponent(startPoint === 'Aktueller Standort' ? '' : startPoint)}&Z=${encodeURIComponent(destination)}&mode=transit`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all shadow-xl shadow-red-600/10"
+                            title="Im DB Navigator öffnen"
+                          >
+                            DB <Train className="w-2.5 h-2.5" />
+                          </a>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
