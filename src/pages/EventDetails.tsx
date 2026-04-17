@@ -720,6 +720,7 @@ export default function EventDetails() {
         onClose={() => setShowTransit(false)}
         destination={aktion?.location}
         destinationName={aktion?.location}
+        eventStartTime={aktion?.date}
       />
     </div>
   );

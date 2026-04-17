@@ -7,13 +7,17 @@
   --font-serif: "Playfair Display", serif;
   
   --color-brand: #ffffff;
-  --color-surface: #0a0a0a;
-  --color-surface-muted: #141414;
-  --color-surface-elevated: #1a1a1a;
-  --color-border: rgba(255, 255, 255, 0.08);
+  --color-surface: #050505;
+  --color-surface-muted: #0d0d0d;
+  --color-surface-elevated: #171717;
+  --color-border: rgba(255, 255, 255, 0.05);
   --color-text: #ffffff;
-  --color-text-muted: rgba(255, 255, 255, 0.5);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
   --color-text-dim: rgba(255, 255, 255, 0.3);
+  
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
 }
 
 body {
@@ -22,27 +26,28 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  overscroll-behavior-y: none; /* Prevents bounce scroll on mobile for a more app-like feel */
+  overscroll-behavior-y: none;
+  font-feature-settings: 'ss01', 'ss02', 'cv01', 'cv03';
 }
 
 @layer base {
   h1, h2, h3, h4 {
-    @apply font-serif tracking-tight font-bold;
+    @apply font-serif tracking-tight font-bold text-balance;
   }
   
-  /* Reset button highlights on mobile */
   button, a {
     -webkit-tap-highlight-color: transparent;
+    @apply transition-all duration-300;
   }
 }
 
-/* Glassmorphism utility */
+/* Enhanced Glassmorphism */
 .glass {
-  @apply bg-white/[0.03] backdrop-blur-xl border border-white/10;
+  @apply bg-white/[0.02] backdrop-blur-3xl border border-white/5 shadow-2xl;
 }
 
 .glass-dark {
-  @apply bg-black/40 backdrop-blur-2xl border border-white/5;
+  @apply bg-black/50 backdrop-blur-3xl border border-white/5;
 }
 
 /* Safe area padding for mobile */

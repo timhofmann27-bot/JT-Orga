@@ -251,11 +251,14 @@ export default function TransitPlanner({
                     className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-colors ml-1 active:scale-95"
                   >
                     <Clock className="w-3.5 h-3.5" />
-                    {departureTime ? (
-                      <span className="text-white">Abfahrt: {format(parseISO(departureTime), 'dd.MM. HH:mm')}</span>
-                    ) : (
-                      'Abfahrt: Jetzt'
-                    )}
+                    {(() => {
+                      if (!departureTime) return 'Abfahrt: Jetzt';
+                      try {
+                        return <span className="text-white">Abfahrt: {format(parseISO(departureTime), 'dd.MM. HH:mm')}</span>;
+                      } catch (e) {
+                        return 'Abfahrt: Jetzt';
+                      }
+                    })()}
                   </button>
 
                   <AnimatePresence>
@@ -340,7 +343,14 @@ export default function TransitPlanner({
                   <div className="text-center">
                     <div className="text-2xl font-serif font-bold text-white tracking-tighter mb-2">In Google Maps navigieren</div>
                     <div className="text-[10px] font-black text-emerald-400/60 uppercase tracking-[0.3em]">
-                      {eventStartTime ? `Ankunft geplant für ${format(parseISO(eventStartTime), 'HH:mm')} Uhr` : 'Optimale Verbindung'}
+                      {(() => {
+                        if (!eventStartTime) return 'Optimale Verbindung';
+                        try {
+                          return `Ankunft geplant für ${format(parseISO(eventStartTime), 'HH:mm')} Uhr`;
+                        } catch (e) {
+                          return 'Optimale Verbindung';
+                        }
+                      })()}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-[10px] font-black text-white/20 uppercase tracking-widest mt-4">

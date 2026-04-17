@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, LogOut, User, Clock, ChevronRight, AlertCircle, Train } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, LogOut, User, Clock, ChevronRight, AlertCircle, Train, Settings, ChevronDown } from 'lucide-react';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { de } from 'date-fns/locale';
 import toast from 'react-hot-toast';
@@ -67,6 +67,7 @@ export default function PersonDashboard() {
   const [invitations, setInvitations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [transitAktion, setTransitAktion] = useState<any>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -143,12 +144,75 @@ export default function PersonDashboard() {
               </Link>
             )}
             <NotificationsMenu apiPrefix="/api/public" />
-            <button 
-              onClick={handleLogout}
-              className="w-12 h-12 flex items-center justify-center bg-white/5 text-white/20 hover:text-white hover:bg-white/10 rounded-2xl border border-white/5 transition-all"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className="flex items-center gap-2 bg-white/5 text-white hover:bg-white/10 rounded-2xl border border-white/5 px-4 py-3 transition-all"
+              >
+                <User className="w-5 h-5" />
+                <ChevronDown className={`w-4 h-4 transition-transform ${showSettings ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full right-0 mt-3 w-80 glass p-6 rounded-3xl border border-white/5 z-50"
+                  >
+                    <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-6">Profil bearbeiten</div>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const target = e.target as any;
+                      try {
+                        const res = await fetch('/api/public/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ 
+                            username: target.username.value,
+                            name: target.name.value,
+                            currentPassword: target.currentPassword.value || null,
+                            newPassword: target.newPassword.value || null
+                          })
+                        });
+                        if (!res.ok) {
+                          const data = await res.json();
+                          throw new Error(data.error);
+                        }
+                        toast.success('Profil aktualisiert');
+                        target.currentPassword.value = '';
+                        target.newPassword.value = '';
+                        setShowSettings(false);
+                      } catch (e: any) {
+                        toast.error(e.message || 'Fehler beim Aktualisieren');
+                      }
+                    }} className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest pl-1">Benutzername</label>
+                        <input name="username" defaultValue={user?.username} className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest pl-1">Name</label>
+                        <input name="name" defaultValue={user?.name} className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <div className="pt-2 border-t border-white/5">
+                        <input name="currentPassword" type="password" placeholder="Aktuelles Passwort" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm mb-2" />
+                        <input name="newPassword" type="password" placeholder="Neues Passwort" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <button type="submit" className="w-full bg-white text-black font-black py-3 rounded-xl hover:bg-white/90 transition-all uppercase tracking-widest text-[10px]">Speichern</button>
+                    </form>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full mt-6 flex items-center justify-center gap-2 text-rose-400/60 hover:text-rose-400 transition-all text-[10px] uppercase font-black"
+                    >
+                      <LogOut className="w-3 h-3" /> Abmelden
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
       </header>
@@ -338,6 +402,7 @@ export default function PersonDashboard() {
         onClose={() => setTransitAktion(null)}
         destination={transitAktion?.location}
         destinationName={transitAktion?.location}
+        eventStartTime={transitAktion?.date}
       />
     </div>
   );

@@ -137,11 +137,13 @@ export default function PublicInvite() {
       if (res.ok) {
         setSuccess(true);
       } else {
-        const err = await res.json();
-        throw new Error(err.error || 'Fehler beim Speichern.');
+        const errorData = await res.json().catch(() => ({}));
+        console.error('API Error:', errorData);
+        throw new Error(errorData.error || 'Fehler beim Speichern der Antwort. Bitte versuche es später erneut.');
       }
     } catch (e: any) {
-      toast.error(e.message);
+      console.error('Submission Error:', e);
+      toast.error(e.message || 'Ein Netzwerkfehler ist aufgetreten.');
     }
   };
 
@@ -230,20 +232,20 @@ export default function PublicInvite() {
             <p className="text-white/30 mb-12 font-medium text-lg leading-relaxed">Deine Antwort wurde erfolgreich übermittelt.</p>
             
             <div className="bg-black/40 backdrop-blur-md p-10 rounded-[2.5rem] text-left border border-white/5 mb-12">
-              <p className="font-black text-white/10 mb-6 uppercase tracking-[0.3em] text-[10px]">Your Status</p>
+              <p className="font-black text-white/10 mb-6 uppercase tracking-[0.3em] text-[10px]">Dein Status</p>
               <div className="flex items-center gap-4">
                 <div className={`w-3 h-3 rounded-full ${
                   status === 'yes' ? 'bg-emerald-400' : status === 'no' ? 'bg-red-400' : 'bg-amber-400'
                 } shadow-[0_0_15px_rgba(0,0,0,0.5)]`} />
                 <div className="font-serif text-3xl text-white font-bold tracking-tight">
-                  {status === 'yes' && "I'm in"}
-                  {status === 'no' && "Sadly not"}
-                  {status === 'maybe' && "Maybe"}
+                  {status === 'yes' && "Ich bin dabei"}
+                  {status === 'no' && "Leider nicht"}
+                  {status === 'maybe' && "Vielleicht"}
                 </div>
               </div>
               {guestsCount > 0 && (
                 <div className="mt-6 flex items-center gap-3 text-white/30 text-xs font-bold uppercase tracking-widest pl-7">
-                  <Users className="w-4 h-4" /> + {guestsCount} Guests
+                  <Users className="w-4 h-4" /> + {guestsCount} Gäste
                 </div>
               )}
             </div>
@@ -254,14 +256,14 @@ export default function PublicInvite() {
                   to="/dashboard"
                   className="w-full bg-white text-black font-black py-6 rounded-3xl flex items-center justify-center gap-3 shadow-3xl text-[11px] uppercase tracking-[0.3em] transition-all hover:bg-white/90"
                 >
-                  Go to App <ArrowRight className="w-4 h-4" />
+                  Zur App <ArrowRight className="w-4 h-4" />
                 </Link>
               </motion.div>
               <button 
                 onClick={() => setSuccess(false)}
                 className="text-white/10 hover:text-white/30 text-[10px] font-black uppercase tracking-[0.2em] transition-all py-2"
               >
-                Change Response
+                Antwort ändern
               </button>
             </div>
           </div>
@@ -379,40 +381,40 @@ export default function PublicInvite() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="bg-surface-muted rounded-[3.5rem] shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-white/5 p-10 sm:p-20 relative overflow-hidden"
+            className="glass rounded-3xl p-8 border border-white/5 relative overflow-hidden"
           >
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
             
             <form onSubmit={handleSubmit} className="relative z-10">
-              <h2 className="text-5xl font-serif font-bold text-white mb-16 tracking-tighter">RSVP</h2>
+              <h2 className="text-4xl font-serif font-bold text-white mb-10 tracking-tighter">Abstimmung</h2>
               
               {isDeadlinePassed && (
-                <div className="bg-red-500/5 text-red-400/60 border border-red-500/10 p-8 rounded-3xl mb-12 text-sm font-black uppercase tracking-widest text-center shadow-inner">
+                <div className="bg-red-500/5 text-red-400/60 border border-red-500/10 p-6 rounded-2xl mb-10 text-[10px] font-black uppercase tracking-widest text-center shadow-inner">
                   Die Frist ist leider abgelaufen.
                 </div>
               )}
 
-              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16 ${isDeadlinePassed ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 ${isDeadlinePassed ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
                 {[
-                  { id: 'yes', label: 'In', icon: CheckCircle, color: 'emerald' },
-                  { id: 'no', label: 'Out', icon: XCircle, color: 'rose' },
-                  { id: 'maybe', label: '?', icon: HelpCircle, color: 'amber' }
+                  { id: 'yes', label: 'Dabei', icon: CheckCircle, color: 'emerald' },
+                  { id: 'no', label: 'Leider nicht', icon: XCircle, color: 'rose' },
+                  { id: 'maybe', label: 'Vielleicht', icon: HelpCircle, color: 'amber' }
                 ].map((opt) => (
                   <motion.label 
                     key={opt.id}
-                    whileHover={{ y: -8 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.98 }}
                     className={`
-                      cursor-pointer border border-white/5 rounded-[2.5rem] p-10 text-center transition-all relative overflow-hidden group
+                      cursor-pointer border border-white/5 rounded-2xl p-6 text-center transition-all relative overflow-hidden group
                       ${status === opt.id 
-                        ? `bg-white/[0.05] border-white/20 shadow-[0_0_80px_rgba(255,255,255,0.05)]` 
+                        ? `bg-white/[0.05] border-white/20 shadow-2xl` 
                         : 'bg-black/20 hover:bg-black/40'}
                     `}
                   >
                     <input type="radio" name="status" value={opt.id} className="sr-only" checked={status === opt.id} onChange={() => setStatus(opt.id)} disabled={isDeadlinePassed} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <opt.icon className={`w-12 h-12 mb-6 transition-all duration-500 ${status === opt.id ? `text-white scale-110 shadow-3xl` : 'text-white/10 group-hover:text-white/20'}`} />
-                      <span className={`text-[10px] font-black uppercase tracking-[0.3em] transition-colors ${status === opt.id ? 'text-white' : 'text-white/20'}`}>
+                      <opt.icon className={`w-8 h-8 mb-3 transition-all duration-500 ${status === opt.id ? `text-white scale-110` : 'text-white/10 group-hover:text-white/20'}`} />
+                      <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${status === opt.id ? 'text-white' : 'text-white/20'}`}>
                         {opt.label}
                       </span>
                     </div>
@@ -426,22 +428,22 @@ export default function PublicInvite() {
                     initial={{ opacity: 0, height: 0 }} 
                     animate={{ opacity: 1, height: 'auto' }} 
                     exit={{ opacity: 0, height: 0 }}
-                    className={`mb-12 overflow-hidden ${isDeadlinePassed ? 'opacity-30' : ''}`}
+                    className={`mb-8 overflow-hidden ${isDeadlinePassed ? 'opacity-30' : ''}`}
                   >
-                    <label className="flex items-center gap-4 text-[10px] font-black text-white/10 uppercase tracking-[0.3em] mb-6 ml-4">
-                      <Users className="w-5 h-5" /> Guests
+                    <label className="flex items-center gap-3 text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 pl-1">
+                      <Users className="w-4 h-4" /> Gäste
                     </label>
-                    <div className="grid grid-cols-5 gap-3">
+                    <div className="grid grid-cols-5 gap-2">
                       {[0, 1, 2, 3, 4].map(num => (
                         <button
                           key={num}
                           type="button"
                           onClick={() => setGuestsCount(num)}
                           disabled={isDeadlinePassed}
-                          className={`py-6 rounded-3xl font-black text-xs transition-all border ${
+                          className={`py-4 rounded-xl font-black text-xs transition-all border ${
                             guestsCount === num 
                             ? 'bg-white text-black border-white shadow-xl scale-105' 
-                            : 'bg-black/20 text-white/20 border-white/5 hover:border-white/10'
+                            : 'bg-black/40 text-white/20 border-white/5 hover:border-white/10'
                           }`}
                         >
                           {num === 0 ? '0' : `+${num}`}
@@ -452,27 +454,27 @@ export default function PublicInvite() {
                 )}
               </AnimatePresence>
 
-              <div className={`mb-16 ${isDeadlinePassed ? 'opacity-30' : ''}`}>
-                <label className="block text-[10px] font-black text-white/10 uppercase tracking-[0.3em] mb-6 ml-4">
-                  Note
+              <div className={`mb-10 ${isDeadlinePassed ? 'opacity-30' : ''}`}>
+                <label className="block text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-4 pl-1">
+                  Anmerkung
                 </label>
                 <textarea 
                   value={comment}
                   onChange={e => setComment(e.target.value)}
-                  placeholder="Anything on your mind?..."
-                  className="w-full bg-black/40 border border-white/5 rounded-[2.5rem] p-10 text-white focus:outline-none focus:ring-4 focus:ring-white/5 transition-all font-medium placeholder:text-white/5 text-xl tracking-tight leading-relaxed min-h-[200px]"
+                  placeholder="Hast du noch etwas mitzuteilen?..."
+                  className="w-full bg-black/50 border border-white/5 rounded-2xl p-5 text-white/80 focus:outline-none focus:ring-1 focus:ring-white/10 transition-all font-medium placeholder:text-white/10 text-sm leading-relaxed min-h-[120px]"
                   disabled={isDeadlinePassed}
                 />
               </div>
 
               {!isDeadlinePassed && (
                 <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   type="submit"
-                  className="w-full bg-white text-black font-black py-8 px-12 rounded-[2.5rem] shadow-[0_32px_64px_rgba(255,255,255,0.1)] text-[12px] uppercase tracking-[0.4em] transition-all hover:bg-white/90 active:scale-[0.97]"
+                  className="w-full bg-white text-black font-black py-5 rounded-2xl shadow-2xl text-[10px] uppercase tracking-[0.3em] transition-all hover:bg-white/90 active:scale-[0.98]"
                 >
-                  Send RSVP
+                  Abstimmung senden
                 </motion.button>
               )}
             </form>
@@ -534,38 +536,35 @@ export default function PublicInvite() {
             >
               <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white/[0.02] to-transparent pointer-events-none" />
               <div className="relative z-10">
-                <h2 className="text-5xl font-serif font-bold text-white mb-8 tracking-tighter">Stay Connected.</h2>
+                <h2 className="text-5xl font-serif font-bold text-white mb-8 tracking-tighter">Bleib in Verbindung</h2>
                 <p className="text-white/30 mb-16 font-medium leading-relaxed text-xl tracking-tight max-w-sm">
-                  Create a profile to manage all your invitations and access live updates.
+                  Erstelle ein Profil, um deine Einladungen zu verwalten und Live-Updates zu erhalten.
                 </p>
                 
-                <form onSubmit={handleSetupProfile} className="space-y-8">
-                  <div className="space-y-4">
-                    <div className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em] ml-4">Account Details</div>
-                    <div className="grid sm:grid-cols-2 gap-6">
-                      <div className="relative group">
-                        <User className="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-white transition-all" />
-                        <input 
-                          type="text" 
-                          required 
-                          value={setupUsername}
-                          onChange={e => setSetupUsername(e.target.value)}
-                          placeholder="Username"
-                          className="w-full bg-black/40 border border-white/5 rounded-3xl p-7 pl-16 text-white focus:outline-none focus:ring-4 focus:ring-white/5 transition-all text-lg font-medium"
-                        />
-                      </div>
-                      <div className="relative group">
-                        <Lock className="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within:text-white transition-all" />
-                        <input 
-                          type="password" 
-                          required 
-                          minLength={8}
-                          value={setupPassword}
-                          onChange={e => setSetupPassword(e.target.value)}
-                          placeholder="Password (8+ chars)"
-                          className="w-full bg-black/40 border border-white/5 rounded-3xl p-7 pl-16 text-white focus:outline-none focus:ring-4 focus:ring-white/5 transition-all text-lg font-medium"
-                        />
-                      </div>
+                <form onSubmit={handleSetupProfile} className="space-y-6">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="relative group">
+                      <User className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-all" />
+                      <input 
+                        type="text" 
+                        required 
+                        value={setupUsername}
+                        onChange={e => setSetupUsername(e.target.value)}
+                        placeholder="Benutzername"
+                        className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 pl-14 text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                      />
+                    </div>
+                    <div className="relative group">
+                      <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-all" />
+                      <input 
+                        type="password" 
+                        required 
+                        minLength={8}
+                        value={setupPassword}
+                        onChange={e => setSetupPassword(e.target.value)}
+                        placeholder="Passwort (min. 8 Zeichen)"
+                        className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 pl-14 text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
+                      />
                     </div>
                   </div>
                   <motion.button 
@@ -573,9 +572,9 @@ export default function PublicInvite() {
                     whileTap={{ scale: 0.99 }}
                     type="submit"
                     disabled={isSettingUp}
-                    className="w-full bg-white/5 text-white font-black py-7 rounded-3xl hover:bg-white/10 transition-all border border-white/5 text-[11px] uppercase tracking-[0.3em] disabled:opacity-50"
+                    className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-white/90 transition-all text-[10px] uppercase tracking-[0.2em] disabled:opacity-50"
                   >
-                    {isSettingUp ? 'Creating Account...' : 'Join the Community'}
+                    {isSettingUp ? 'Wird erstellt...' : 'Registrieren'}
                   </motion.button>
                 </form>
               </div>
@@ -593,8 +592,8 @@ export default function PublicInvite() {
                   <CheckCircle className="w-10 h-10 text-emerald-400/30" />
                 </div>
                 <div className="text-left">
-                  <div className="font-serif text-3xl font-bold text-white tracking-tight leading-none mb-3">Profile Active</div>
-                  <div className="text-white/20 font-medium text-lg leading-tight">Everything is set up.</div>
+                  <div className="font-serif text-3xl font-bold text-white tracking-tight leading-none mb-3">Profil aktiviert</div>
+                  <div className="text-white/20 font-medium text-lg leading-tight">Alles ist bereit.</div>
                 </div>
               </div>
               <Link 

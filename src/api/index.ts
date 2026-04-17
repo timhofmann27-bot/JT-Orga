@@ -599,6 +599,44 @@ apiRouter.use('/admin', adminRouter);
 // --- PUBLIC ROUTES ---
 const publicRouter = Router();
 
+publicRouter.get('/profile', requirePersonAuth, (req: any, res) => {
+  const user = db.prepare('SELECT username, name FROM persons WHERE id = ?').get(req.person.id) as any;
+  if (!user) return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+  res.json({ username: user.username, name: user.name });
+});
+
+publicRouter.put('/profile', requirePersonAuth, (req: any, res) => {
+  try {
+    const { username, name, currentPassword, newPassword } = req.body;
+    
+    const user = db.prepare('SELECT * FROM persons WHERE id = ?').get(req.person.id) as any;
+    if (!user) return res.status(404).json({ error: 'Benutzer nicht gefunden' });
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Aktuelles Passwort wird benötigt' });
+      }
+      if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
+        return res.status(401).json({ error: 'Aktuelles Passwort ist falsch' });
+      }
+      
+      const newHash = bcrypt.hashSync(newPassword, 10);
+      db.prepare('UPDATE persons SET username = ?, name = ?, password_hash = ? WHERE id = ?')
+        .run(username, name, newHash, req.person.id);
+    } else {
+      db.prepare('UPDATE persons SET username = ?, name = ? WHERE id = ?')
+        .run(username, name, req.person.id);
+    }
+
+    res.json({ success: true });
+  } catch (e: any) {
+    if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ error: 'Benutzername bereits vergeben' });
+    }
+    res.status(400).json({ error: 'Ungültige Daten' });
+  }
+});
+
 publicRouter.post('/registration-request', (req, res) => {
   try {
     const { name, email } = registrationRequestSchema.parse(req.body);

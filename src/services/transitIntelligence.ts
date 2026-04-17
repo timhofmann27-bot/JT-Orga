@@ -24,7 +24,18 @@ export interface EnrichedConnection extends TransitConnection {
   summary: string;
 }
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : undefined;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing. Please configure it in your environment.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 /**
  * Advanced transit intelligence system logic.
@@ -211,7 +222,7 @@ Beispiele:
 Keine Anführungszeichen, nur der Satz.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: { temperature: 0.7, topP: 0.9 }
@@ -234,7 +245,7 @@ Beispiele:
 Nur der Satz, keine Anführungszeichen.`;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await getAI().models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: { temperature: 0.7 }
