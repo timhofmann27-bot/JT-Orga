@@ -16,11 +16,13 @@ import PublicInvite from './pages/PublicInvite';
 import RegisterRequest from './pages/RegisterRequest';
 import Register from './pages/Register';
 import RegistrationRequests from './pages/RegistrationRequests';
+import InstallAppBanner from './components/InstallAppBanner';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+      <InstallAppBanner />
       <Routes>
         <Route path="/admin/login" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
