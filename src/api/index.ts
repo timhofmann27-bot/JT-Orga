@@ -28,6 +28,11 @@ const apiLimiter = rateLimit({
 });
 apiRouter.use(apiLimiter);
 
+// Health check endpoint
+apiRouter.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // --- AUTH MIDDLEWARE ---
 const requireAuth = (req: any, res: any, next: any) => {
   const token = req.cookies.admin_token;
