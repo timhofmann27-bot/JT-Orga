@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { X, Eye, EyeOff, Settings } from 'lucide-react';
+import { X, Eye, EyeOff, Settings, UserPlus, Trash2, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { motion } from 'motion/react';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+}
+
+interface AdminUser {
+  id: number;
+  username: string;
 }
 
 export default function SettingsModal({ isOpen, onClose }: Props) {
@@ -17,6 +22,23 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Admin Management state
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
+  const [showAddAdmin, setShowAddAdmin] = useState(false);
+  const [newAdminUsername, setNewAdminUsername] = useState('');
+  const [newAdminPassword, setNewAdminPassword] = useState('');
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  const fetchAdmins = async () => {
+    try {
+      const res = await fetch('/api/admin/admins');
+      if (res.ok) {
+        const data = await res.json();
+        setAdmins(data);
+      }
+    } catch (e) {}
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -27,13 +49,66 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
         })
         .catch(() => toast.error('Fehler beim Laden der Einstellungen'));
       
+      fetch('/api/admin/check')
+        .then(res => res.json())
+        .then(data => setCurrentUser(data.user))
+        .catch(() => {});
+
+      fetchAdmins();
+      
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setShowAddAdmin(false);
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleCreateAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminUsername || !newAdminPassword) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/admins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: newAdminUsername, password: newAdminPassword })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Erstellen');
+      }
+
+      toast.success('Neuer Admin erfolgreich erstellt');
+      setNewAdminUsername('');
+      setNewAdminPassword('');
+      setShowAddAdmin(false);
+      fetchAdmins();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAdmin = async (id: number) => {
+    if (!confirm('Bist du sicher, dass du diesen Admin-Zugang löschen möchtest?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/admins/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Fehler beim Löschen');
+      }
+      toast.success('Admin erfolgreich gelöscht');
+      fetchAdmins();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -164,7 +239,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
             </div>
           </div>
 
-          <div className="flex gap-4 pt-8">
+          <div className="flex gap-4 pt-8 border-t border-white/5">
             <button 
               type="button" 
               onClick={onClose} 
@@ -180,6 +255,88 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
             >
               {loading ? '...' : 'Speichern'}
             </button>
+          </div>
+
+          <div className="pt-12 mt-12 border-t border-white/10">
+            <div className="flex items-center justify-between mb-8">
+              <div className="space-y-1">
+                <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Admins verwalten</h3>
+                <p className="text-[11px] text-white/20">Zusätzliche Admin-Accounts für das Team</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddAdmin(!showAddAdmin)}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              >
+                <UserPlus className="w-5 h-5" />
+              </button>
+            </div>
+
+            {showAddAdmin && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="mb-8 p-6 bg-white/5 border border-white/10 rounded-2xl space-y-4"
+              >
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-white/20 uppercase tracking-widest ml-1">Neuer Benutzername</label>
+                  <input 
+                    type="text" 
+                    value={newAdminUsername}
+                    onChange={e => setNewAdminUsername(e.target.value)}
+                    placeholder="z.B. tom_orga"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-1 focus:ring-white/20 outline-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-bold text-white/20 uppercase tracking-widest ml-1">Initial-Passwort</label>
+                  <input 
+                    type="password" 
+                    value={newAdminPassword}
+                    onChange={e => setNewAdminPassword(e.target.value)}
+                    placeholder="Mind. 8 Zeichen"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-sm text-white focus:ring-1 focus:ring-white/20 outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCreateAdmin}
+                  disabled={loading || !newAdminUsername || newAdminPassword.length < 8}
+                  className="w-full py-3 bg-white/10 text-white rounded-xl text-sm font-bold hover:bg-white/20 transition-all disabled:opacity-20"
+                >
+                  Admin erstellen
+                </button>
+              </motion.div>
+            )}
+
+            <div className="space-y-3">
+              {admins.map(admin => (
+                <div 
+                  key={admin.id} 
+                  className="flex items-center justify-between p-5 bg-white/[0.02] border border-white/5 rounded-2xl group hover:bg-white/[0.04] transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                      <Shield className="w-4 h-4 text-white/20" />
+                    </div>
+                    <span className="text-sm text-white/60 font-medium">@{admin.username}</span>
+                  </div>
+                  
+                  {currentUser && admin.id !== currentUser.id && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAdmin(admin.id)}
+                      className="p-3 text-white/10 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                  {currentUser && admin.id === currentUser.id && (
+                    <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest mr-2">Ich</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </form>
       </motion.div>

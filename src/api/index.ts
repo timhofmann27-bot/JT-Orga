@@ -590,6 +590,45 @@ adminRouter.get('/settings', (req: any, res) => {
   res.json({ username: user.username });
 });
 
+// Admin Management
+adminRouter.get('/admins', (req, res) => {
+  const admins = db.prepare('SELECT id, username FROM admin_users ORDER BY username ASC').all();
+  res.json(admins);
+});
+
+adminRouter.post('/admins', (req, res) => {
+  try {
+    const { username, password } = z.object({
+      username: z.string().min(3).max(50).transform(sanitizeText),
+      password: z.string().min(8).max(100)
+    }).parse(req.body);
+
+    const hash = bcrypt.hashSync(password, 10);
+    const info = db.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').run(username, hash);
+    const adminId = info.lastInsertRowid;
+
+    // Create person for the new admin immediately
+    const personInfo = db.prepare('INSERT INTO persons (name, notes) VALUES (?, ?)').run(username, 'Admin Account');
+    const personId = personInfo.lastInsertRowid;
+    db.prepare('UPDATE admin_users SET person_id = ? WHERE id = ?').run(personId, adminId);
+
+    res.json({ success: true, id: adminId });
+  } catch (e: any) {
+    if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(400).json({ error: 'Benutzername ist bereits vergeben' });
+    }
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Fehler beim Erstellen des Admins' });
+  }
+});
+
+adminRouter.delete('/admins/:id', (req, res) => {
+  if (Number(req.params.id) === (req as any).admin.id) {
+    return res.status(400).json({ error: 'Du kannst dich nicht selbst löschen' });
+  }
+  db.prepare('DELETE FROM admin_users WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
 adminRouter.put('/settings', (req: any, res) => {
   try {
     const { username, currentPassword, newPassword } = settingsSchema.parse(req.body);
