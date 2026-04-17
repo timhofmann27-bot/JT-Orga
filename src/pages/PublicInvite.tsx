@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, Users, Lock, Mail, ArrowRight, User, AlertCircle, Train, Repeat, MessageSquare, Trash2, Send } from 'lucide-react';
+import { Calendar, MapPin, CheckCircle, XCircle, HelpCircle, Users, Lock, Mail, ArrowRight, User, AlertCircle, Train, Repeat, MessageSquare, Trash2, Send, Compass, Trophy, Megaphone, Zap } from 'lucide-react';
 import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
@@ -32,44 +32,41 @@ function Countdown({ deadline }: { deadline: string }) {
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 30 }}
       animate={{ 
         opacity: 1, 
         y: 0,
-        scale: timeLeft < 86400 ? [1, 1.02, 1] : 1
+        scale: timeLeft < 86400 ? [1, 1.01, 1] : 1
       }}
       transition={{ 
-        scale: { duration: 2, repeat: Infinity },
-        default: { duration: 0.5 }
+        scale: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+        default: { duration: 1, ease: [0.16, 1, 0.3, 1] }
       }}
-      className="bg-red-500/10 border border-red-500/20 rounded-3xl p-6 backdrop-blur-md flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden group"
+      className="premium-card p-10 rounded-4xl flex flex-col items-center justify-center text-center shadow-none relative overflow-hidden group"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent pointer-events-none" />
-      <motion.div 
-        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        className="text-[10px] font-black text-red-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"
-      >
-        <AlertCircle className="w-4 h-4" /> Frist läuft ab
-      </motion.div>
-      <div className="flex gap-4 font-mono text-3xl font-black text-white">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.03] to-transparent pointer-events-none" />
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+        <span className="micro-label !text-red-400/60 uppercase tracking-[0.3em]">Antwort ausstehend</span>
+      </div>
+      <div className="flex gap-10 font-serif text-5xl font-black text-white tracking-widest leading-none">
         {days > 0 && (
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center gap-2">
             <span className="text-white">{days}</span>
-            <span className="text-[10px] text-white/30 uppercase tracking-widest mt-1">Tage</span>
+            <span className="micro-label !opacity-30">Tage</span>
           </div>
         )}
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-2">
           <span className="text-white">{hours.toString().padStart(2, '0')}</span>
-          <span className="text-[10px] text-white/30 uppercase tracking-widest mt-1">Std</span>
+          <span className="micro-label !opacity-30">Std</span>
         </div>
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center gap-2">
           <span className="text-white">{minutes.toString().padStart(2, '0')}</span>
-          <span className="text-[10px] text-white/30 uppercase tracking-widest mt-1">Min</span>
+          <span className="micro-label !opacity-30">Min</span>
         </div>
-        <div className="flex flex-col items-center text-red-400">
-          <span className="text-red-400">{seconds.toString().padStart(2, '0')}</span>
-          <span className="text-[10px] text-red-400/30 uppercase tracking-widest mt-1">Sek</span>
+        <div className="flex flex-col items-center gap-2 text-red-400/60">
+          <span className="text-red-400/80">{seconds.toString().padStart(2, '0')}</span>
+          <span className="micro-label !opacity-30 !text-red-400/20">Sek</span>
         </div>
       </div>
     </motion.div>
@@ -298,6 +295,26 @@ export default function PublicInvite() {
   const { aktion, invitee } = data;
   const isDeadlinePassed = aktion?.response_deadline && new Date() > new Date(aktion.response_deadline);
 
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'wanderung': return <Compass className="w-10 h-10" />;
+      case 'sport': return <Trophy className="w-10 h-10" />;
+      case 'demo': return <Megaphone className="w-10 h-10" />;
+      case 'spontan': return <Zap className="w-10 h-10" />;
+      default: return <Calendar className="w-10 h-10" />;
+    }
+  };
+
+  const getEventLabel = (type: string) => {
+    switch (type) {
+      case 'wanderung': return 'Wanderung';
+      case 'sport': return 'Sport';
+      case 'demo': return 'Demo';
+      case 'spontan': return 'Spontanaktion';
+      default: return 'Vertrauliche Einladung';
+    }
+  };
+
   if (success) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center p-6 relative overflow-hidden">
@@ -378,95 +395,115 @@ export default function PublicInvite() {
           </Link>
         </div>
       )}
-      <div className="max-w-xl mx-auto space-y-20 pb-20">
+      <div className="max-w-2xl mx-auto space-y-24 pb-32">
         {/* Header / Aktion Info */}
         <motion.div 
-          initial={{ opacity: 0, y: 40 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, scale: 0.98 }} 
+          animate={{ opacity: 1, scale: 1 }} 
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
           className="relative"
         >
-          <div className="bg-surface-muted rounded-[4rem] shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-white/5 overflow-hidden relative">
-            <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none" />
+          <div className="premium-card rounded-4xl p-10 sm:p-20 text-center relative z-10 flex flex-col items-center shadow-none border-white/[0.08]">
+            <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-white/[0.05] to-transparent pointer-events-none" />
             
-            <div className="p-10 sm:p-20 text-center relative z-10 flex flex-col items-center">
-              <motion.div 
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.8 }}
-                className="w-20 h-20 bg-white/5 rounded-[1.8rem] flex items-center justify-center mb-10 border border-white/5"
-              >
-                <Calendar className="w-10 h-10 text-white/20" />
-              </motion.div>
-              <h1 className="text-5xl sm:text-7xl font-serif font-bold text-white tracking-tighter leading-[0.9] mb-8">
-                {aktion?.title}
-              </h1>
-              <p className="text-white/20 font-medium text-lg sm:text-xl tracking-tight max-w-sm">
-                Hey {invitee?.name_snapshot || invitee?.name}, you're invited.
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-4 mb-12"
+            >
+              <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+              <span className="micro-label">{getEventLabel(aktion.type)}</span>
+            </motion.div>
+
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.4, duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="w-24 h-24 bg-white text-black rounded-3xl flex items-center justify-center mb-12 shadow-[0_32px_64px_-16px_rgba(255,255,255,0.2)] ring-1 ring-white/20 active:scale-95 transition-transform"
+            >
+              {getEventIcon(aktion.type)}
+            </motion.div>
+
+            <h1 className="text-6xl sm:text-8xl font-serif font-black text-white tracking-tighter leading-[0.85] mb-12">
+              {aktion?.title}
+            </h1>
+
+            <div className="h-px w-24 bg-white/10 mb-12" />
+
+            <div className="space-y-6">
+              <h2 className="text-white/40 font-serif italic text-4xl sm:text-5xl tracking-[-0.04em] leading-none">
+                Grüß dich {invitee?.name_snapshot || invitee?.name},
+              </h2>
+              <p className="text-white font-display font-medium text-2xl sm:text-3xl uppercase tracking-[0.2em] leading-[1.1] max-w-lg">
+                Es ist an Zeit Stärke für <br />
+                <span className="text-white/50 italic font-serif lowercase tracking-tighter pr-3 text-3xl sm:text-4xl">die</span> 
+                Heimat zu zeigen.
               </p>
             </div>
-            
-            <div className="p-10 sm:p-20 pt-0 space-y-16 relative z-10">
-              <div className="grid sm:grid-cols-2 gap-12">
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">When</div>
-                  <div className="space-y-1">
-                    <div className="text-white font-serif text-3xl font-bold tracking-tight">
-                      {aktion?.date ? format(parseISO(aktion.date), 'EEEE, dd. MMM', { locale: de }) : '-'}
-                    </div>
-                    <div className="text-white/30 text-lg font-medium">{aktion?.date ? format(parseISO(aktion.date), 'HH:mm', { locale: de }) : '-'} Uhr</div>
+
+            <div className="grid sm:grid-cols-2 gap-16 w-full text-left mt-24">
+              <div className="space-y-6">
+                <span className="micro-label">Zeitplan</span>
+                <div className="space-y-2">
+                  <div className="text-white font-serif text-3xl font-bold tracking-tight leading-none group-hover:text-white/80 transition-colors cursor-default">
+                    {aktion?.date ? format(parseISO(aktion.date), 'EEEE, dd. MMM', { locale: de }) : '-'}
                   </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">Where</div>
-                  <div className="space-y-1">
-                    <div className="text-white font-serif text-3xl font-bold tracking-tight leading-tight">{aktion?.location}</div>
-                    {aktion?.meeting_point && (
-                      <div className="text-white/20 text-sm font-medium pt-2 border-t border-white/5 inline-block">
-                        Treffpunkt: {aktion.meeting_point}
-                      </div>
-                    )}
-                  </div>
+                  <div className="text-white/30 text-xl font-medium italic">{aktion?.date ? format(parseISO(aktion.date), 'HH:mm', { locale: de }) : '-'} Uhr</div>
                 </div>
               </div>
-
-              {aktion?.location && (
-                <div className="space-y-6">
-                  <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="rounded-[2.5rem] overflow-hidden border border-white/5 brightness-75 grayscale hover:grayscale-0 transition-all duration-700 h-64 shadow-2xl relative group"
-                  >
-                    <MapComponent location={aktion.location} />
-                    <div className="absolute inset-x-0 bottom-0 p-4 sm:p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-wrap justify-end gap-2 sm:gap-3">
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setShowTransit(true); }}
-                        className="bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all active:scale-95"
-                      >
-                        <Train className="w-3 h-3 sm:w-4 sm:h-4" /> Route
-                      </button>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); generateVCalendar(aktion, window.location.href); }}
-                        className="bg-white text-black px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl flex items-center gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl"
-                      >
-                        <Calendar className="w-3 h-3 sm:w-4 sm:h-4" /> Kalender
-                      </button>
+              
+              <div className="space-y-6">
+                <span className="micro-label">Standort</span>
+                <div className="space-y-3">
+                  <div className="text-white font-serif text-3xl font-bold tracking-tight leading-tight group-hover:text-white/80 transition-colors cursor-default">
+                    {aktion?.location}
+                  </div>
+                  {aktion?.meeting_point && (
+                    <div className="inline-block px-4 py-2 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/30">
+                      Treffpunkt: {aktion.meeting_point}
                     </div>
-                  </motion.div>
+                  )}
                 </div>
-              )}
-
-              {aktion?.description && (
-                <div className="space-y-6 pt-12 border-t border-white/5">
-                  <div className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">Details</div>
-                  <p className="text-white/40 text-xl whitespace-pre-wrap leading-relaxed font-medium tracking-tight">
-                    {aktion.description}
-                  </p>
-                </div>
-              )}
+              </div>
             </div>
+
+            {aktion?.location && (
+              <div className="w-full mt-24 relative group">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                  className="rounded-3xl overflow-hidden border border-white/10 shadow-2xl h-80 relative"
+                >
+                  <MapComponent location={aktion.location} />
+                  <div className="absolute inset-0 bg-black/20 pointer-events-none group-hover:opacity-0 transition-opacity duration-700" />
+                  <div className="absolute inset-x-0 bottom-0 p-8 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-wrap justify-end gap-3 z-20">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setShowTransit(true); }}
+                      className="bg-white/10 hover:bg-white/20 backdrop-blur-3xl border border-white/20 px-6 py-3 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all active:scale-95 shadow-2xl"
+                    >
+                      <Train className="w-4 h-4" /> Route
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); generateVCalendar(aktion, window.location.href); }}
+                      className="bg-white text-black px-8 py-3 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-[0_20px_40px_rgba(255,255,255,0.2)]"
+                    >
+                      <Calendar className="w-4 h-4" /> Exportieren
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
+            {aktion?.description && (
+              <div className="w-full mt-24 text-left space-y-8 pt-20 border-t border-white/5 relative">
+                 <span className="micro-label absolute top-10 left-0">Hinweise</span>
+                 <p className="text-white/50 text-2xl whitespace-pre-wrap leading-[1.4] font-medium tracking-tighter italic font-serif">
+                   "{aktion.description}"
+                 </p>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -485,35 +522,41 @@ export default function PublicInvite() {
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
             
             <form onSubmit={handleSubmit} className="relative z-10">
-              <h2 className="text-4xl font-serif font-bold text-white mb-10 tracking-tighter">Abstimmung</h2>
+              <div className="flex items-center justify-between mb-16">
+                <h2 className="text-4xl font-serif font-bold text-white tracking-tighter">Rückmeldung</h2>
+                <div className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                   <span className="micro-label !text-emerald-500/60">Live Rückmeldung</span>
+                </div>
+              </div>
               
               {isDeadlinePassed && (
-                <div className="bg-red-500/5 text-red-400/60 border border-red-500/10 p-6 rounded-2xl mb-10 text-[10px] font-black uppercase tracking-widest text-center shadow-inner">
-                  Die Frist ist leider abgelaufen.
+                <div className="bg-red-500/5 text-red-400/80 border border-red-500/10 p-8 rounded-3xl mb-12 text-[10px] font-black uppercase tracking-[0.3em] text-center shadow-inner italic">
+                  Abstimmungsfrist abgelaufen.
                 </div>
               )}
 
-              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 ${isDeadlinePassed ? 'opacity-30 pointer-events-none grayscale' : ''}`}>
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16 ${isDeadlinePassed ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
                 {[
-                  { id: 'yes', label: 'Dabei', icon: CheckCircle, color: 'emerald' },
-                  { id: 'no', label: 'Leider nicht', icon: XCircle, color: 'rose' },
-                  { id: 'maybe', label: 'Vielleicht', icon: HelpCircle, color: 'amber' }
+                  { id: 'yes', label: 'Einsatzbereit', icon: CheckCircle, color: 'emerald' },
+                  { id: 'no', label: 'Abwesend', icon: XCircle, color: 'rose' },
+                  { id: 'maybe', label: 'Unklar', icon: HelpCircle, color: 'amber' }
                 ].map((opt) => (
                   <motion.label 
                     key={opt.id}
-                    whileHover={{ y: -2 }}
+                    whileHover={{ scale: 1.02, y: -4 }}
                     whileTap={{ scale: 0.98 }}
                     className={`
-                      cursor-pointer border border-white/5 rounded-2xl p-6 text-center transition-all relative overflow-hidden group
+                      cursor-pointer border rounded-3xl p-8 text-center transition-all relative overflow-hidden group
                       ${status === opt.id 
-                        ? `bg-white/[0.05] border-white/20 shadow-2xl` 
-                        : 'bg-black/20 hover:bg-black/40'}
+                        ? `bg-white text-black border-white shadow-[0_24px_48px_rgba(255,255,255,0.2)]` 
+                        : 'bg-white/[0.02] border-white/5 hover:border-white/10'}
                     `}
                   >
                     <input type="radio" name="status" value={opt.id} className="sr-only" checked={status === opt.id} onChange={() => setStatus(opt.id)} disabled={isDeadlinePassed} />
                     <div className="relative z-10 flex flex-col items-center">
-                      <opt.icon className={`w-8 h-8 mb-3 transition-all duration-500 ${status === opt.id ? `text-white scale-110` : 'text-white/10 group-hover:text-white/20'}`} />
-                      <span className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${status === opt.id ? 'text-white' : 'text-white/20'}`}>
+                      <opt.icon className={`w-10 h-10 mb-4 transition-all duration-700 ${status === opt.id ? `text-black scale-110` : 'text-white/10 group-hover:text-white/30'}`} />
+                      <span className={`text-[10px] font-black uppercase tracking-[0.25em] transition-colors ${status === opt.id ? 'text-black' : 'text-white/20'}`}>
                         {opt.label}
                       </span>
                     </div>
@@ -730,62 +773,89 @@ export default function PublicInvite() {
           )}
 
           {/* Message Board */}
-          <div className="bg-surface-muted rounded-[3.5rem] border border-white/5 p-10 sm:p-20 relative overflow-hidden mt-12">
-            <div className="flex justify-between items-center mb-10">
-              <div>
-                <h2 className="text-4xl font-serif font-bold text-white mb-2 tracking-tighter">Pinnwand</h2>
-                <p className="text-white/30 font-medium text-lg tracking-tight">Nachrichten & Fragen</p>
+          <div className="premium-card rounded-4xl p-10 sm:p-20 relative overflow-hidden mt-12 border-white/[0.08] shadow-none">
+            <div className="flex justify-between items-center mb-16">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                   <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                   <span className="micro-label uppercase tracking-[0.3em]">Kommunikationsbereich</span>
+                </div>
+                <h2 className="text-4xl sm:text-6xl font-serif font-black text-white tracking-tighter leading-none">Pinnwand</h2>
+                <p className="text-white/30 font-medium text-lg leading-tight tracking-tight italic">Echte Gespräche, keine Filter.</p>
               </div>
-              <MessageSquare className="w-8 h-8 text-white/10" />
+              <div className="w-16 h-16 bg-white/5 rounded-3xl flex items-center justify-center text-white/10 group-hover:text-white/20 transition-colors">
+                 <MessageSquare className="w-8 h-8" />
+              </div>
             </div>
 
-            <div className="space-y-6 mb-10">
+            <div className="space-y-10 mb-16">
               {messages.length === 0 ? (
-                <div className="text-center py-10 px-4 bg-white/[0.02] rounded-3xl border border-white/5 border-dashed">
-                   <p className="text-white/30 text-[10px] font-bold uppercase tracking-widest">Noch keine Nachrichten.</p>
+                <div className="text-center py-24 px-4 bg-white/[0.01] rounded-4xl border border-white/5 border-dashed">
+                   <p className="text-white/20 text-[10px] font-black uppercase tracking-[0.5em]">System bereit. Warten auf Signale...</p>
                 </div>
               ) : (
-                messages.map(msg => (
-                  <div key={msg.id} className={`p-6 rounded-3xl border ${msg.is_admin ? 'bg-white/5 border-white/20' : 'bg-black/40 border-white/5'}`}>
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex items-center gap-3">
-                        <span className={`font-serif font-bold text-lg tracking-tight ${msg.is_admin ? 'text-white' : 'text-white/60'}`}>
-                          {msg.is_admin ? (aktion?.title || 'Event Team') : msg.person_name}
+                messages.map((msg, i) => (
+                  <motion.div 
+                    key={msg.id} 
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className={`p-10 rounded-4xl border relative group transition-all duration-500 ${msg.is_admin ? 'bg-white text-black border-white shadow-[0_32px_64px_-16px_rgba(255,255,255,0.1)]' : 'bg-white/[0.02] border-white/[0.05] hover:border-white/10'}`}
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-3">
+                          <span className={`font-serif font-black text-2xl tracking-tighter leading-none ${msg.is_admin ? 'text-black' : 'text-white'}`}>
+                            {msg.is_admin ? (aktion?.title || 'Einsatzleitung') : msg.person_name}
+                          </span>
+                          {msg.is_admin && (
+                            <div className="bg-black/10 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest">
+                               ORGA
+                            </div>
+                          )}
+                        </div>
+                        <span className={`micro-label !text-[9px] ${msg.is_admin ? 'text-black/30' : 'text-white/20'}`}>
+                          {format(parseISO(msg.created_at), 'dd.MM • HH:mm')}
                         </span>
-                        {msg.is_admin ? <span className="bg-white text-black px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest">Orga</span> : null}
-                        <span className="text-white/20 text-[10px] font-bold uppercase tracking-widest">{format(parseISO(msg.created_at), 'dd.MM HH:mm')}</span>
                       </div>
                       {msg.person_id === invitee.person_id && (
-                        <button onClick={() => handleDeleteMessage(msg.id)} className="text-white/10 hover:text-red-400 transition-colors">
-                          <Trash2 className="w-3.5 h-3.5" />
+                        <button 
+                          onClick={() => handleDeleteMessage(msg.id)} 
+                          className={`transition-colors p-2 rounded-xl h-10 w-10 flex items-center justify-center ${msg.is_admin ? 'hover:bg-black/5 text-black/20 hover:text-red-600' : 'hover:bg-white/5 text-white/10 hover:text-red-400'}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
-                    <p className="text-white/80 font-medium leading-relaxed whitespace-pre-wrap">{msg.message}</p>
-                  </div>
+                    <p className={`text-xl font-medium leading-relaxed whitespace-pre-wrap tracking-tight italic font-serif ${msg.is_admin ? 'text-black/80' : 'text-white/60'}`}>
+                      "{msg.message}"
+                    </p>
+                  </motion.div>
                 ))
               )}
             </div>
 
             {invitee.has_profile ? (
-              <form onSubmit={handlePostMessage} className="relative">
+              <form onSubmit={handlePostMessage} className="relative group">
                 <textarea
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Deine Nachricht an alle..."
-                  className="w-full bg-black/60 border border-white/10 rounded-3xl p-6 pr-16 text-white placeholder:text-white/20 outline-none focus:border-white/30 transition-colors resize-none h-32"
+                  placeholder="Deine Nachricht an den Hub..."
+                  className="w-full bg-black/40 border border-white/5 rounded-[2.5rem] p-10 pr-24 text-white text-xl font-serif italic placeholder:text-white/10 outline-none focus:border-white/[0.08] transition-all resize-none h-48 focus:bg-black/60 shadow-inner"
                 />
-                <button 
+                <motion.button 
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   type="submit" 
                   disabled={!newMessage.trim()}
-                  className="absolute bottom-6 right-6 w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center disabled:opacity-50 disabled:bg-white/5 disabled:text-white/20 transition-all hover:scale-105 active:scale-95"
+                  className="absolute bottom-8 right-8 w-16 h-16 bg-white text-black rounded-[1.8rem] flex items-center justify-center disabled:opacity-0 disabled:scale-90 transition-all shadow-[0_20px_40px_rgba(255,255,255,0.2)]"
                 >
-                  <Send className="w-5 h-5 -ml-0.5" />
-                </button>
+                  <Send className="w-6 h-6 -ml-0.5" />
+                </motion.button>
               </form>
             ) : (
-              <div className="bg-black/40 border border-white/5 rounded-3xl p-6 text-center">
-                <p className="text-white/40 text-sm font-medium">Du musst dir unten ein Profil erstellen, um auf die Pinnwand schreiben zu können.</p>
+              <div className="bg-black/40 border-dashed border-2 border-white/5 rounded-4xl p-10 text-center">
+                <p className="text-white/30 text-sm font-medium leading-relaxed italic">Erstelle unten ein Profil, um Signale an den Hub zu senden.</p>
               </div>
             )}
           </div>
@@ -796,39 +866,57 @@ export default function PublicInvite() {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
-              className="space-y-12"
+              className="space-y-16"
             >
               <div className="flex items-center justify-between px-10">
-                <h2 className="text-4xl font-serif font-bold text-white tracking-tighter flex items-center gap-6">
-                  The List
-                </h2>
-                <div className="px-4 py-2 bg-white/5 rounded-full border border-white/5 text-[10px] font-black uppercase tracking-widest text-white/30">
-                  {data.participants.length} Joining
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />
+                    <span className="micro-label">Teilnehmerliste</span>
+                  </div>
+                  <h2 className="text-5xl sm:text-7xl font-serif font-black text-white tracking-tighter leading-none">
+                    Dabei
+                  </h2>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                   <div className="text-6xl font-serif font-black text-white/5 leading-none">/0{data.participants.length}</div>
+                   <span className="micro-label !text-white/30 tracking-[0.4em]">Teilnehmer</span>
                 </div>
               </div>
               
-              <div className="grid gap-4">
+              <div className="grid gap-6">
                 {data.participants.map((p: any, i: number) => (
                   <motion.div 
                     key={i} 
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="flex items-center justify-between p-8 rounded-[2.5rem] bg-surface-muted border border-white/5 hover:border-white/10 transition-all group"
+                    className="flex items-center justify-between p-10 rounded-4xl premium-card border-white/[0.04] shadow-none hover:bg-white/[0.02] transition-colors group"
                   >
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-[1.2rem] bg-white/[0.02] flex items-center justify-center font-serif font-black text-2xl text-white/20 group-hover:text-white/40 transition-colors">
+                    <div className="flex items-center gap-10">
+                      <div className="w-20 h-20 rounded-3xl bg-white text-black flex items-center justify-center font-serif font-black text-4xl shadow-2xl group-hover:scale-105 transition-transform duration-500">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <div className="font-bold text-white text-2xl font-serif tracking-tight">{p.name}</div>
-                        {p.guests_count > 0 && <div className="text-[10px] font-black text-white/10 uppercase tracking-widest mt-1">+ {p.guests_count} Guests</div>}
+                      <div className="space-y-2">
+                        <div className="font-black text-white text-3xl font-serif tracking-tighter leading-none">
+                          {p.name}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {p.status === 'yes' && <div className="micro-label !text-emerald-400">Einsatzbereit</div>}
+                          {p.status === 'maybe' && <div className="micro-label !text-amber-400">Unklar</div>}
+                          {p.status === 'no' && <div className="micro-label !text-rose-400">Abgewiesen</div>}
+                          {p.guests_count > 0 && (
+                            <div className="micro-label !text-white/20 ml-2 border-l border-white/5 pl-4">
+                              +{p.guests_count} Gäste
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {p.status === 'yes' && <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]" />}
-                      {p.status === 'maybe' && <div className="w-2 h-2 rounded-full bg-amber-400" />}
-                      {p.status === 'no' && <div className="w-2 h-2 rounded-full bg-rose-400" />}
+                      <div className={`w-3 h-3 rounded-full ${
+                        p.status === 'yes' ? 'bg-emerald-400' : p.status === 'maybe' ? 'bg-amber-400' : 'bg-rose-400'
+                      } shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-500 group-hover:scale-150`} />
                     </div>
                   </motion.div>
                 ))}
@@ -839,52 +927,62 @@ export default function PublicInvite() {
           {/* Profile Setup */}
           {!invitee.has_profile && (
             <motion.div 
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              className="bg-surface-muted rounded-[3.5rem] shadow-[0_32px_128px_rgba(0,0,0,0.5)] border border-white/5 p-10 sm:p-20 relative overflow-hidden"
+              className="premium-card rounded-4xl p-10 sm:p-20 relative overflow-hidden shadow-none border-white/[0.08]"
             >
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-white/[0.02] to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-white/[0.03] to-transparent pointer-events-none" />
               <div className="relative z-10">
-                <h2 className="text-5xl font-serif font-bold text-white mb-8 tracking-tighter">Bleib in Verbindung</h2>
-                <p className="text-white/30 mb-16 font-medium leading-relaxed text-xl tracking-tight max-w-sm">
-                  Erstelle ein Profil, um deine Einladungen zu verwalten und Live-Updates zu erhalten.
+                <div className="flex items-center gap-3 mb-8">
+                   <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
+                   <span className="micro-label uppercase tracking-[0.3em]">Identitäts-Protokoll</span>
+                </div>
+                <h2 className="text-5xl sm:text-7xl font-serif font-black text-white mb-8 tracking-tighter leading-none">Verbinden</h2>
+                <p className="text-white/30 mb-16 font-medium leading-[1.3] text-xl tracking-tight max-w-sm italic">
+                  Erstelle ein Profil, um deine Signale zu festigen und operative Updates zu erhalten.
                 </p>
                 
-                <form onSubmit={handleSetupProfile} className="space-y-6">
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="relative group">
-                      <User className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-all" />
-                      <input 
-                        type="text" 
-                        required 
-                        value={setupUsername}
-                        onChange={e => setSetupUsername(e.target.value)}
-                        placeholder="Benutzername"
-                        className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 pl-14 text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
-                      />
+                <form onSubmit={handleSetupProfile} className="space-y-10">
+                  <div className="grid sm:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <span className="micro-label !text-white/10 pl-1">Name</span>
+                      <div className="relative group">
+                        <User className="absolute left-8 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10 group-focus-within:text-white transition-all" />
+                        <input 
+                          type="text" 
+                          required 
+                          value={setupUsername}
+                          onChange={e => setSetupUsername(e.target.value)}
+                          placeholder="z.B. agent.null"
+                          className="w-full bg-black/40 border border-white/5 rounded-3xl p-8 pl-16 text-white placeholder:text-white/10 focus:outline-none focus:border-white/20 transition-all text-lg font-serif italic"
+                        />
+                      </div>
                     </div>
-                    <div className="relative group">
-                      <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-white transition-all" />
-                      <input 
-                        type="password" 
-                        required 
-                        minLength={8}
-                        value={setupPassword}
-                        onChange={e => setSetupPassword(e.target.value)}
-                        placeholder="Passwort (min. 8 Zeichen)"
-                        className="w-full bg-black/50 border border-white/10 rounded-2xl p-5 pl-14 text-white placeholder:text-white/20 focus:outline-none focus:ring-1 focus:ring-white/20 transition-all text-sm font-medium"
-                      />
+                    <div className="space-y-4">
+                      <span className="micro-label !text-white/10 pl-1">Zugang Schlüssel</span>
+                      <div className="relative group">
+                        <Lock className="absolute left-8 top-1/2 -translate-y-1/2 w-4 h-4 text-white/10 group-focus-within:text-white transition-all" />
+                        <input 
+                          type="password" 
+                          required 
+                          minLength={8}
+                          value={setupPassword}
+                          onChange={e => setSetupPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="w-full bg-black/40 border border-white/5 rounded-3xl p-8 pl-16 text-white placeholder:text-white/10 focus:outline-none focus:border-white/20 transition-all text-lg font-serif italic"
+                        />
+                      </div>
                     </div>
                   </div>
                   <motion.button 
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSettingUp}
-                    className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-white/90 transition-all text-[10px] uppercase tracking-[0.2em] disabled:opacity-50"
+                    className="w-full bg-white text-black font-black py-8 rounded-[2rem] hover:bg-white/90 transition-all text-[11px] uppercase tracking-[0.4em] disabled:opacity-50 shadow-[0_24px_48px_rgba(255,255,255,0.1)] active:scale-95"
                   >
-                    {isSettingUp ? 'Wird erstellt...' : 'Registrieren'}
+                    {isSettingUp ? 'Initialisiere...' : 'Profil Erstellen'}
                   </motion.button>
                 </form>
               </div>
@@ -893,24 +991,24 @@ export default function PublicInvite() {
 
           {invitee.has_profile && (
             <motion.div 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              className="bg-white/[0.02] rounded-[3.5rem] border border-white/5 p-12 flex flex-col sm:flex-row items-center justify-between gap-12"
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              className="premium-card rounded-4xl p-12 flex flex-col sm:flex-row items-center justify-between gap-12 border-white/[0.08] shadow-none py-16"
             >
-              <div className="flex items-center gap-8">
-                <div className="w-20 h-20 bg-emerald-500/5 rounded-[1.8rem] flex items-center justify-center border border-emerald-500/10">
-                  <CheckCircle className="w-10 h-10 text-emerald-400/30" />
+              <div className="flex items-center gap-10">
+                <div className="w-24 h-24 bg-white text-black rounded-3xl flex items-center justify-center shadow-[0_20px_40px_rgba(255,255,255,0.1)]">
+                  <CheckCircle className="w-12 h-12" />
                 </div>
-                <div className="text-left">
-                  <div className="font-serif text-3xl font-bold text-white tracking-tight leading-none mb-3">Profil aktiviert</div>
-                  <div className="text-white/20 font-medium text-lg leading-tight">Alles ist bereit.</div>
+                <div className="text-left space-y-2">
+                  <div className="font-serif text-4xl font-black text-white tracking-tighter leading-none">Identität Bestätigt</div>
+                  <div className="text-white/20 font-medium text-lg leading-tight tracking-tight italic">Einsatzprotokoll läuft.</div>
                 </div>
               </div>
               <Link 
                 to="/dashboard"
-                className="w-full sm:w-auto text-black font-black text-[10px] bg-white hover:bg-white/90 px-12 py-6 rounded-[1.8rem] transition-all flex items-center justify-center gap-3 uppercase tracking-[0.3em]"
+                className="w-full sm:w-auto text-black font-black text-[11px] bg-white hover:bg-white/90 px-16 py-8 rounded-[2rem] transition-all flex items-center justify-center gap-4 uppercase tracking-[0.4em] shadow-[0_20px_40px_rgba(255,255,255,0.1)]"
               >
-                Dashboard <ArrowRight className="w-4 h-4" />
+                Zum Dashboard <ArrowRight className="w-5 h-5" />
               </Link>
             </motion.div>
           )}

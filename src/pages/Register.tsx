@@ -60,7 +60,7 @@ export default function Register() {
         </Link>
 
         <div className="mb-16 space-y-4">
-          <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Join Us</h1>
+          <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Beitreten</h1>
           <p className="text-white/20 font-medium text-lg tracking-tight">Erstelle dein Profil mit deinem Key.</p>
         </div>
 
@@ -69,7 +69,7 @@ export default function Register() {
           
           <form onSubmit={handleRegister} className="space-y-8 relative z-10">
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Access Key</label>
+              <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Zugangsschlüssel</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
                   <Key className="w-5 h-5 text-white/20 group-focus-within:text-white transition-all duration-500" />
@@ -86,7 +86,7 @@ export default function Register() {
             </div>
 
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Username</label>
+              <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Benutzername</label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
                   <User className="w-5 h-5 text-white/20 group-focus-within:text-white transition-all duration-500" />

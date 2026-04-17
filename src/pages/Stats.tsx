@@ -58,7 +58,7 @@ export default function Stats() {
       <div className="mb-20">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-16">
           <div className="space-y-2">
-            <h1 className="text-5xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-none">Analyse</h1>
+            <h1 className="text-5xl sm:text-6xl font-display font-medium text-white tracking-tighter leading-none">Analyse</h1>
             <p className="text-white/30 font-medium text-lg tracking-tight">Erfolg und Engagement deiner Events.</p>
           </div>
           <div className="w-16 h-16 bg-surface-elevated border border-white/10 rounded-[2rem] flex items-center justify-center shadow-2xl relative overflow-hidden group">

@@ -44,17 +44,17 @@ function Countdown({ deadline }: { deadline: string }) {
       <div className="flex gap-1.5 font-mono text-sm font-black text-white">
         {days > 0 && (
           <div className="flex flex-col items-center">
-            <span>{days}d</span>
+            <span>{days}T</span>
           </div>
         )}
         <div className="flex flex-col items-center">
-          <span>{hours.toString().padStart(2, '0')}h</span>
+          <span>{hours.toString().padStart(2, '0')}S</span>
         </div>
         <div className="flex flex-col items-center">
-          <span>{minutes.toString().padStart(2, '0')}m</span>
+          <span>{minutes.toString().padStart(2, '0')}M</span>
         </div>
         <div className="flex flex-col items-center text-red-400">
-          <span>{seconds.toString().padStart(2, '0')}s</span>
+          <span>{seconds.toString().padStart(2, '0')}S</span>
         </div>
       </div>
     </motion.div>
@@ -154,7 +154,7 @@ export default function PersonDashboard() {
             )}
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Willkommen</span>
-              <span className="font-serif text-2xl font-bold text-white tracking-tighter leading-none mt-1">{user?.name}</span>
+              <span className="font-display text-2xl font-medium text-white tracking-tighter leading-none mt-1">{user?.name}</span>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -163,7 +163,7 @@ export default function PersonDashboard() {
                 to="/" 
                 className="hidden sm:flex items-center gap-2 text-[10px] text-white/40 hover:text-white transition-all font-black uppercase tracking-widest bg-white/5 px-6 py-3 rounded-2xl border border-white/5"
               >
-                Dashboard
+                Verwaltung
               </Link>
             )}
             <NotificationsMenu apiPrefix="/api/public" />
@@ -266,7 +266,7 @@ export default function PersonDashboard() {
           <section>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
               <div className="space-y-4">
-                <h2 className="text-5xl font-serif font-bold text-white tracking-tighter leading-none">Neu für <span className="text-white/30">dich</span></h2>
+                <h2 className="text-5xl font-display font-medium text-white tracking-tighter leading-none">Neu für <span className="text-white/30 font-serif italic">dich</span></h2>
                 <div className="flex items-center gap-3">
                   <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
                   <p className="text-white/30 text-xs font-black uppercase tracking-widest">{pending.length} offene {pending.length === 1 ? 'Einladung' : 'Einladungen'}</p>
@@ -331,7 +331,7 @@ export default function PersonDashboard() {
         {/* Meine Aktionen */}
         <section>
           <div className="flex flex-col gap-4 mb-12">
-            <h2 className="text-5xl font-serif font-bold text-white tracking-tighter leading-none">Deine <span className="text-white/30">Übersicht</span></h2>
+            <h2 className="text-5xl font-display font-medium text-white tracking-tighter leading-none">Deine <span className="text-white/30 font-serif italic">Übersicht</span></h2>
             <div className="h-px w-24 bg-white/20" />
           </div>
           {responded.length > 0 ? (

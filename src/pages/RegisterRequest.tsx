@@ -64,7 +64,7 @@ export default function RegisterRequest() {
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
             </div>
             <div className="space-y-6">
-              <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none">Done</h1>
+              <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none">Bestätigt</h1>
               <p className="text-white/30 text-lg leading-relaxed tracking-tight max-w-xs mx-auto">
                 Deine Anfrage wird geprüft. Du erhältst deinen Key sobald er freigegeben wurde.
               </p>
@@ -73,13 +73,13 @@ export default function RegisterRequest() {
               to="/login"
               className="inline-flex items-center gap-4 bg-white text-black font-black py-6 px-12 rounded-[2rem] hover:bg-white/90 transition-all shadow-3xl text-[11px] uppercase tracking-[0.3em] active:scale-95"
             >
-              Back to Login
+              Zum Login
             </Link>
           </motion.div>
         ) : (
           <>
             <div className="mb-16 space-y-4">
-              <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Join Us</h1>
+              <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Beitreten</h1>
               <p className="text-white/20 font-medium text-lg tracking-tight">Beantrage deinen persönlichen Key.</p>
             </div>
 
@@ -88,7 +88,7 @@ export default function RegisterRequest() {
               
               <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Display Name</label>
+                  <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Name</label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
                       <User className="w-5 h-5 text-white/20 group-focus-within:text-white transition-all duration-500" />

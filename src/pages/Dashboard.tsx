@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, MapPin, Clock, ChevronRight, Edit2, Trash2, Settings, Users, CheckCircle2, Calendar, Archive, Hourglass, UserPlus } from 'lucide-react';
+import { Plus, MapPin, Clock, ChevronRight, Edit2, Trash2, Settings, Users, CheckCircle2, Calendar, Archive, Hourglass, UserPlus, Compass, Trophy, Megaphone, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, parseISO, formatDistanceToNow, isFuture } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [editingAktion, setEditingAktion] = useState<any>(null);
-  const [formData, setFormData] = useState({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '' });
+  const [formData, setFormData] = useState({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '', type: 'event' });
   
   const [stats, setStats] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -61,7 +61,7 @@ export default function Dashboard() {
       toast.success(editingAktion ? 'Aktion aktualisiert' : 'Aktion erstellt');
       setShowModal(false);
       setEditingAktion(null);
-      setFormData({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '' });
+      setFormData({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '', type: 'event' });
       fetchAktionen();
     } catch (e: any) {
       toast.error(e.message);
@@ -109,15 +109,36 @@ export default function Dashboard() {
       location: aktion.location, 
       meeting_point: aktion.meeting_point || '',
       description: aktion.description || '', 
-      response_deadline: aktion.response_deadline || '' 
+      response_deadline: aktion.response_deadline || '',
+      type: aktion.type || 'event'
     });
     setShowModal(true);
   };
 
   const openNew = () => {
     setEditingAktion(null);
-    setFormData({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '' });
+    setFormData({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '', type: 'event' });
     setShowModal(true);
+  };
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'wanderung': return <Compass className="w-4 h-4" />;
+      case 'sport': return <Trophy className="w-4 h-4" />;
+      case 'demo': return <Megaphone className="w-4 h-4" />;
+      case 'spontan': return <Zap className="w-4 h-4" />;
+      default: return <Calendar className="w-4 h-4" />;
+    }
+  };
+
+  const getEventLabel = (type: string) => {
+    switch (type) {
+      case 'wanderung': return 'Wanderung';
+      case 'sport': return 'Sport';
+      case 'demo': return 'Demo';
+      case 'spontan': return 'Spontan';
+      default: return 'Aktion';
+    }
   };
 
   const now = new Date();
@@ -139,11 +160,17 @@ export default function Dashboard() {
       >
         <div className="flex flex-col gap-6 h-full">
           <div className="flex justify-between items-start gap-4">
-            <div className="space-y-1 flex-1">
-              <h3 className="font-serif text-2xl text-white group-hover:text-white transition-colors leading-tight">
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-white/5 p-1.5 rounded-lg text-white/40">
+                  {getEventIcon(aktion.type)}
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">{getEventLabel(aktion.type)}</span>
+              </div>
+              <h3 className="font-display text-2xl text-white group-hover:text-white transition-colors leading-tight">
                 {aktion?.title}
               </h3>
-              <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest">
+              <div className="flex items-center gap-2 text-white/40 text-xs font-bold uppercase tracking-widest pt-1">
                 <Clock className="w-3.5 h-3.5" />
                 <span>{aktion?.date ? format(parseISO(aktion.date), 'EEEE, dd. MMM', { locale: de }) : '-'}</span>
               </div>
@@ -193,23 +220,30 @@ export default function Dashboard() {
 
   return (
     <div className="pb-24">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-10 mb-20 px-2 lg:px-0">
-        <div className="space-y-2">
-          <h1 className="text-[10px] font-bold text-white/20 uppercase tracking-[0.5em] mb-4">Übersicht</h1>
-          <h2 className="text-4xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-[0.9]">Aktionen</h2>
-          <p className="text-white/40 font-medium text-lg max-w-md leading-relaxed">Verwalte deine Veranstaltungen, Mitglieder und Teilnehmer im Netzwerk.</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-12 mb-24 px-2 lg:px-0">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shadow-[0_0_15px_rgba(255,255,255,0.8)]" />
+            <span className="micro-label">Systemkonsole</span>
+          </div>
+          <h2 className="text-5xl sm:text-7xl font-display font-medium text-white tracking-tighter leading-[0.8] animate-fade-in-up">
+            Aktionen <span className="text-white/20 italic font-serif">Zentrale</span>
+          </h2>
+          <p className="text-white/30 font-medium text-xl max-w-lg leading-relaxed">
+            Zentrales Management für Einsatzbereitschaft, <br />Mitglieder & operative Ereignisse.
+          </p>
         </div>
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
           <button
             onClick={() => setShowSettings(true)}
-            className="w-12 h-12 flex items-center justify-center bg-white/5 border border-white/5 text-white/80 rounded-2xl hover:bg-white/10 transition-all active:scale-90"
+            className="w-14 h-14 flex items-center justify-center bg-white/5 border border-white/5 text-white/50 rounded-2xl hover:bg-white/10 transition-all hover:text-white active:scale-90"
             title="Einstellungen"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-6 h-6" />
           </button>
           <button
             onClick={openNew}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white text-black px-10 h-14 rounded-2xl hover:bg-white/90 transition-all text-sm font-bold shadow-2xl shadow-white/5 active:scale-[0.95]"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-4 bg-white text-black px-12 h-16 rounded-[2rem] hover:bg-white/90 transition-all text-[11px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-white/10 active:scale-[0.95]"
           >
             <Plus className="w-4 h-4" />
             <span>Neu erstellen</span>
@@ -245,28 +279,32 @@ export default function Dashboard() {
       )}
 
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-24">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-32">
           {[
-            { label: 'Aktionen', value: stats.events, icon: Calendar },
-            { label: 'Personen', value: stats.persons, icon: Users },
-            { label: 'Einladungen', value: stats.invites, icon: CheckCircle2 },
-            { label: 'Archiviert', value: stats.archived_events, sub: `${stats.archived_pct.toFixed(0)}%`, icon: Archive },
+            { label: 'Gesamt Aktionen', value: stats.events, icon: Calendar },
+            { label: 'Aktive Personen', value: stats.persons, icon: Users },
+            { label: 'Versendete Einladungen', value: stats.invites, icon: CheckCircle2 },
+            { label: 'Archivierte Daten', value: stats.archived_events, sub: `${stats.archived_pct.toFixed(0)}%`, icon: Archive },
           ].map((stat, i) => (
             <motion.div 
               key={i}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="bg-surface-muted p-8 rounded-[2.5rem] border border-white/5 shadow-2xl hover:bg-surface-elevated transition-colors group cursor-default"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              className="premium-card p-10 rounded-[3rem] shadow-none group cursor-default"
             >
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-10">
                 <div className="flex justify-between items-center">
-                  <div className="text-white/20 text-[10px] uppercase font-black tracking-[0.3em]">{stat.label}</div>
-                  <stat.icon className="w-4 h-4 text-white/10 group-hover:text-white/40 transition-colors" />
+                  <div className="micro-label opacity-40">{stat.label}</div>
+                  <stat.icon className="w-4 h-4 text-white/10 group-hover:text-white/30 transition-colors" />
                 </div>
-                <div className="flex items-baseline gap-3">
-                  <div className="text-4xl sm:text-6xl font-serif font-bold text-white tracking-tighter">{stat.value}</div>
-                  {stat.sub && <div className="text-xs font-bold text-white/20 bg-white/5 px-2 py-1 rounded-lg">{stat.sub}</div>}
+                <div className="flex items-baseline gap-4">
+                  <div className="text-5xl sm:text-7xl font-serif font-black text-white tracking-tighter leading-none">{stat.value}</div>
+                  {stat.sub && (
+                    <div className="text-[9px] font-black text-white/30 bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                      {stat.sub}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -360,6 +398,33 @@ export default function Dashboard() {
               <div className="space-y-4">
                 <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Event Bezeichnung</label>
                 <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all text-2xl font-serif placeholder:text-white/5" placeholder="Name der Aktion..." />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Typ der Aktion</label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {[
+                    { id: 'event', label: 'Standard', icon: Calendar },
+                    { id: 'wanderung', label: 'Wanderung', icon: Compass },
+                    { id: 'sport', label: 'Sport', icon: Trophy },
+                    { id: 'demo', label: 'Demo', icon: Megaphone },
+                    { id: 'spontan', label: 'Spontan', icon: Zap }
+                  ].map(type => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => setFormData({...formData, type: type.id})}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${
+                        formData.type === type.id 
+                        ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      <type.icon className="w-5 h-5" />
+                      <span className="text-[9px] font-black uppercase tracking-widest leading-none text-center h-4 flex items-center">{type.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               
               <div className="grid sm:grid-cols-2 gap-10">

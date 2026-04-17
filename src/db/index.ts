@@ -42,6 +42,7 @@ db.exec(`
     location TEXT NOT NULL,
     meeting_point TEXT,
     response_deadline TEXT,
+    type TEXT DEFAULT 'event', -- 'wanderung', 'sport', 'demo', 'spontan'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -205,6 +206,15 @@ try {
 } catch (e: any) {
   if (!e.message.includes('duplicate column name')) {
     console.error('Error adding avatar_url column:', e);
+  }
+}
+
+// Add type column if it doesn't exist (migration)
+try {
+  db.exec("ALTER TABLE events ADD COLUMN type TEXT DEFAULT 'event'");
+} catch (e: any) {
+  if (!e.message.includes('duplicate column name')) {
+    console.error('Error adding type column:', e);
   }
 }
 

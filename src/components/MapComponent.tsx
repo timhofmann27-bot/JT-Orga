@@ -102,12 +102,11 @@ export default function MapComponent({ location }: MapComponentProps) {
         center={coords} 
         zoom={13} 
         scrollWheelZoom={false} 
-        style={{ height: '100%', width: '100%', background: '#050505' }}
+        style={{ height: '100%', width: '100%', background: '#f8f9fa' }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          className="grayscale-item"
         />
         <ChangeView center={coords} />
         <Marker position={coords} icon={favoriteIcon}>
@@ -125,16 +124,10 @@ export default function MapComponent({ location }: MapComponentProps) {
         className="absolute bottom-6 right-6 z-[10] bg-black/40 hover:bg-black/60 backdrop-blur-xl border border-white/20 text-white px-5 py-3 rounded-2xl flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all shadow-2xl"
       >
         <ExternalLink className="w-4 h-4" />
-        Maps
+        Karten
       </button>
 
       <style>{`
-        .leaflet-container {
-          filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(110%);
-        }
-        .leaflet-tile {
-          filter: brightness(0.9);
-        }
         .leaflet-control-container .leaflet-control {
           background: rgba(0,0,0,0.5) !important;
           border: 1px solid rgba(255,255,255,0.1) !important;

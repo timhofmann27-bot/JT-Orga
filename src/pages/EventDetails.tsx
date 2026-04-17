@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, CheckCircle, XCircle, HelpCircle, Clock, Copy, Trash2, Plus, MapPin, Calendar, MessageSquare, UserPlus, Send, Edit2, Hourglass, Train } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle, XCircle, HelpCircle, Clock, Copy, Trash2, Plus, MapPin, Calendar, MessageSquare, UserPlus, Send, Edit2, Hourglass, Train, Compass, Trophy, Megaphone, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { format, parseISO } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -32,7 +32,7 @@ export default function EventDetails() {
   const [checklistFormData, setChecklistFormData] = useState({ item_name: '', notes: '' });
   const [pollFormData, setPollFormData] = useState({ question: '', options: ['', ''] });
   const [selectedPersonIds, setSelectedPersonIds] = useState<number[]>([]);
-  const [formData, setFormData] = useState({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '' });
+  const [formData, setFormData] = useState({ title: '', date: '', location: '', meeting_point: '', description: '', response_deadline: '', type: 'event' });
   const [checklist, setChecklist] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
@@ -329,7 +329,8 @@ export default function EventDetails() {
       location: aktion.location, 
       meeting_point: aktion.meeting_point || '',
       description: aktion.description || '', 
-      response_deadline: aktion.response_deadline || '' 
+      response_deadline: aktion.response_deadline || '',
+      type: aktion.type || 'event'
     });
     setShowEditModal(true);
   };
@@ -362,7 +363,27 @@ export default function EventDetails() {
     toast.success('Link kopiert!');
   };
 
-  if (!aktion) return <div className="p-8 text-center">Lade...</div>;
+  if (!aktion) return <div className="p-8 text-center text-white font-serif">Lade...</div>;
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'wanderung': return <Compass className="w-5 h-5" />;
+      case 'sport': return <Trophy className="w-5 h-5" />;
+      case 'demo': return <Megaphone className="w-5 h-5" />;
+      case 'spontan': return <Zap className="w-5 h-5" />;
+      default: return <Calendar className="w-5 h-5" />;
+    }
+  };
+
+  const getEventLabel = (type: string) => {
+    switch (type) {
+      case 'wanderung': return 'Wanderung';
+      case 'sport': return 'Sport';
+      case 'demo': return 'Demo';
+      case 'spontan': return 'Spontan';
+      default: return 'Aktion';
+    }
+  };
 
   const stats = {
     yes: invites.filter((i: any) => i.status === 'yes').length,
@@ -406,13 +427,22 @@ export default function EventDetails() {
         <div className="px-6 pb-10 sm:px-12 sm:pb-14 -mt-12 sm:-mt-16 relative z-10">
           <div className="flex flex-col gap-8">
             <div className="flex-1 space-y-8">
-              <div className="w-24 h-24 sm:w-32 sm:h-32 bg-surface-elevated rounded-[2rem] shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden backdrop-blur-2xl ring-8 ring-black/20">
-                <div className="bg-white/5 w-full h-full flex flex-col items-center justify-center text-white">
-                  <span className="text-[10px] sm:text-xs font-black uppercase text-white/20 tracking-[0.3em] mb-1">{aktion?.date ? format(parseISO(aktion.date), 'MMM', { locale: de }) : '-'}</span>
-                  <span className="text-4xl sm:text-5xl font-serif font-bold leading-none tracking-tighter">{aktion?.date ? format(parseISO(aktion.date), 'dd') : '-'}</span>
+              <div className="flex items-center gap-6">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-surface-elevated rounded-[2rem] shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden backdrop-blur-2xl ring-8 ring-black/20 shrink-0">
+                  <div className="bg-white/5 w-full h-full flex flex-col items-center justify-center text-white">
+                    <span className="text-[10px] sm:text-xs font-black uppercase text-white/20 tracking-[0.3em] mb-1">{aktion?.date ? format(parseISO(aktion.date), 'MMM', { locale: de }) : '-'}</span>
+                    <span className="text-4xl sm:text-5xl font-serif font-bold leading-none tracking-tighter">{aktion?.date ? format(parseISO(aktion.date), 'dd') : '-'}</span>
+                  </div>
+                </div>
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white shadow-2xl rounded-2xl flex items-center justify-center text-black shrink-0">
+                  {getEventIcon(aktion.type)}
                 </div>
               </div>
               <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] animate-pulse" />
+                  <span className="micro-label !text-white/40">{getEventLabel(aktion.type)}</span>
+                </div>
                 <h1 className="text-4xl sm:text-6xl font-serif font-bold text-white tracking-tighter leading-[0.9]">{aktion?.title || '-'}</h1>
                 <div className="flex flex-wrap gap-2 pt-2">
                   <div className="flex items-center gap-2.5 bg-white/5 px-4 py-2.5 rounded-xl border border-white/5 text-white/50 text-xs font-bold uppercase tracking-widest">
@@ -892,7 +922,34 @@ export default function EventDetails() {
             <form onSubmit={handleEditSubmit} className="space-y-10">
               <div className="space-y-4">
                 <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em] ml-1">Titel</label>
-                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/10 outline-none transition-all text-2xl font-serif" />
+                <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-6 text-white focus:ring-2 focus:ring-white/20 outline-none transition-all text-2xl font-serif" />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-extrabold text-white/20 uppercase tracking-[0.3em] ml-1">Typ der Aktion</label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  {[
+                    { id: 'event', label: 'Standard', icon: Calendar },
+                    { id: 'wanderung', label: 'Wanderung', icon: Compass },
+                    { id: 'sport', label: 'Sport', icon: Trophy },
+                    { id: 'demo', label: 'Demo', icon: Megaphone },
+                    { id: 'spontan', label: 'Spontan', icon: Zap }
+                  ].map(type => (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => setFormData({...formData, type: type.id})}
+                      className={`flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all ${
+                        formData.type === type.id 
+                        ? 'bg-white border-white text-black shadow-[0_0_20px_rgba(255,255,255,0.2)]' 
+                        : 'bg-white/5 border-white/10 text-white/40 hover:bg-white/10'
+                      }`}
+                    >
+                      <type.icon className="w-5 h-5" />
+                      <span className="text-[9px] font-black uppercase tracking-widest leading-none text-center h-4 flex items-center">{type.label}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-10">
                 <div className="space-y-4">

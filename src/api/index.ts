@@ -101,7 +101,8 @@ const eventSchema = z.object({
   date: z.string().min(1, 'Datum ist erforderlich'),
   location: z.string().min(1, 'Ort ist erforderlich').max(200, 'Ort ist zu lang').transform(sanitizeText),
   meeting_point: z.string().max(200, 'Treffpunkt ist zu lang').optional().nullable().transform(v => v ? sanitizeText(v) : v),
-  response_deadline: z.string().optional().nullable()
+  response_deadline: z.string().optional().nullable(),
+  type: z.enum(['event', 'wanderung', 'sport', 'demo', 'spontan']).default('event')
 });
 
 const personSchema = z.object({
@@ -221,7 +222,7 @@ adminRouter.get('/events', (req, res) => {
 });
 adminRouter.post('/events', (req, res) => {
   try {
-    const { title, description, date, location, meeting_point, response_deadline } = eventSchema.parse(req.body);
+    const { title, description, date, location, meeting_point, response_deadline, type } = eventSchema.parse(req.body);
     
     const eventDate = new Date(date);
     const now = new Date();
@@ -240,8 +241,8 @@ adminRouter.post('/events', (req, res) => {
       }
     }
 
-    const stmt = db.prepare('INSERT INTO events (title, description, date, location, meeting_point, response_deadline) VALUES (?, ?, ?, ?, ?, ?)');
-    const info = stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null);
+    const stmt = db.prepare('INSERT INTO events (title, description, date, location, meeting_point, response_deadline, type) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    const info = stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null, type);
     res.json({ id: info.lastInsertRowid });
   } catch (e: any) {
     res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
@@ -254,9 +255,9 @@ adminRouter.get('/events/:id', (req, res) => {
 });
 adminRouter.put('/events/:id', (req, res) => {
   try {
-    const { title, description, date, location, meeting_point, response_deadline } = eventSchema.parse(req.body);
-    const stmt = db.prepare('UPDATE events SET title = ?, description = ?, date = ?, location = ?, meeting_point = ?, response_deadline = ? WHERE id = ?');
-    stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null, req.params.id);
+    const { title, description, date, location, meeting_point, response_deadline, type } = eventSchema.parse(req.body);
+    const stmt = db.prepare('UPDATE events SET title = ?, description = ?, date = ?, location = ?, meeting_point = ?, response_deadline = ?, type = ? WHERE id = ?');
+    stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null, type, req.params.id);
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });

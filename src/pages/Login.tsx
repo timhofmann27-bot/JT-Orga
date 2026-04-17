@@ -73,7 +73,7 @@ export default function Login() {
             <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50" />
           </motion.div>
           <div className="space-y-4">
-            <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Login</h1>
+            <h1 className="text-6xl font-serif font-bold tracking-tighter leading-none text-white">Einrücken</h1>
             <p className="text-white/20 font-medium text-lg tracking-tight">Melde dich an um fortzufahren.</p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-8 relative z-10">
             <div className="space-y-3">
               <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">
-                User
+                Benutzer
               </label>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-7 flex items-center pointer-events-none">
