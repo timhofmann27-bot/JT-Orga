@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import AdminLayout from './components/AdminLayout';
-import PersonLayout from './components/PersonLayout';
 import Login from './pages/Login';
 import PersonDashboard from './pages/PersonDashboard';
 import { PageSkeleton } from './components/ui/Skeleton';
 import { OfflineBanner } from './components/ui/OfflineBanner';
 import { useWebVitals, trackPageView } from './lib/analytics';
+import { useKeyboardShortcuts, ShortcutsModal } from './lib/keyboardShortcuts.tsx';
 import InstallAppBanner from './components/InstallAppBanner';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
@@ -36,10 +36,34 @@ function Analytics() {
   return null;
 }
 
+function KeyboardShortcutsHandler() {
+  useKeyboardShortcuts();
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === '/') {
+        e.preventDefault();
+        setShowShortcuts(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  return (
+    <>
+      <ShortcutsModal isOpen={showShortcuts} onClose={() => setShowShortcuts(false)} />
+    </>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <Analytics />
+      <KeyboardShortcutsHandler />
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
       <OfflineBanner />
       <InstallAppBanner />
@@ -49,9 +73,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register-request" element={<RegisterRequest />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<PersonLayout />}>
-            <Route path="dashboard" element={<PersonDashboard />} />
-          </Route>
+          <Route path="/dashboard" element={<PersonDashboard />} />
           <Route path="/invite/:token" element={<PublicInvite />} />
           
           <Route path="/" element={<AdminLayout />}>
