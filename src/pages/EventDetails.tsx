@@ -9,14 +9,13 @@ import ConfirmModal from '../components/ConfirmModal';
 import MapComponent from '../components/MapComponent';
 import TransitPlanner from '../components/TransitPlanner';
 import { generateVCalendar } from '../lib/calendar';
-import { fetchWeather, getWeatherLabel, WeatherData } from '../lib/weather';
 
 export default function EventDetails() {
   const { id } = useParams();
   if (!id) return <div className="p-8 text-center">Event nicht gefunden</div>;
   const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'planning'>('overview');
   const [aktion, setAktion] = useState<any>(null);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weather, setWeather] = useState<any>(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [invites, setInvites] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
@@ -53,25 +52,51 @@ export default function EventDetails() {
   }, [id]);
 
   useEffect(() => {
-    console.log('Weather effect triggered:', { 
-      hasAktion: !!aktion,
-      location: aktion?.location,
-      date: aktion?.date
-    });
     if (aktion?.location) {
-      loadWeather(aktion.location, aktion.date);
-    } else {
-      console.log('Weather effect: no location, skipping');
+      fetchWeather(aktion.location, aktion.date);
     }
   }, [aktion?.location, aktion?.date]);
 
-  const loadWeather = async (location: string, dateStr: string) => {
-    console.log('loadWeather called:', location, dateStr);
+  const fetchWeather = async (location: string, dateStr: string) => {
     setWeatherLoading(true);
     try {
-      const weatherData = await fetchWeather(location, dateStr);
-      console.log('weatherData result:', weatherData);
-      setWeather(weatherData);
+      // 1. Geocoding
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=de&format=json`);
+      const geoData = await geoRes.json();
+      console.log('Geocoding response:', geoData);
+      
+      if (!geoData.results || geoData.results.length === 0) {
+        setWeather(null);
+        return;
+      }
+
+      const { latitude, longitude } = geoData.results[0];
+      const eventDate = parseISO(dateStr);
+      const isToday = differenceInDays(eventDate, new Date()) === 0;
+      
+      // 2. Weather
+      // If it's more than 14 days in the future, Open-Meteo might not have forecast. 
+      // But we can try the 16-day forecast.
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&timezone=auto`);
+      const weatherData = await weatherRes.json();
+      console.log('Open-Meteo response:', weatherData);
+
+      // Find the specific day in the daily forecast
+      const targetDateStr = format(eventDate, 'yyyy-MM-dd');
+      const dayIndex = weatherData.daily.time.indexOf(targetDateStr);
+
+      if (dayIndex !== -1) {
+        setWeather({
+          temp: Math.round(weatherData.daily.temperature_2m_max[dayIndex]),
+          tempMin: Math.round(weatherData.daily.temperature_2m_min[dayIndex]),
+          code: weatherData.daily.weathercode[dayIndex],
+          rainProb: weatherData.daily.precipitation_probability_max[dayIndex],
+          current: isToday ? Math.round(weatherData.current_weather.temperature) : null
+        });
+      } else {
+        // Fallback or past date
+        setWeather(null);
+      }
     } catch (e) {
       console.error('Weather fetch error:', e);
       setWeather(null);
@@ -81,14 +106,14 @@ export default function EventDetails() {
   };
 
   const getWeatherInfo = (code: number) => {
-    const label = getWeatherLabel(code);
-    if (label === 'Klarer Himmel') return { label, icon: Sun, color: 'text-amber-400' };
-    if (label === 'Leicht bewölkt') return { label, icon: Cloud, color: 'text-blue-300' };
-    if (label === 'Nebel') return { label, icon: Cloud, color: 'text-gray-400' };
-    if (label === 'Regen') return { label, icon: CloudRain, color: 'text-blue-400' };
-    if (label === 'Schnee') return { label, icon: Cloud, color: 'text-white' };
-    if (label === 'Gewitter') return { label, icon: Zap, color: 'text-amber-500' };
-    return { label, icon: Cloud, color: 'text-white/40' };
+    // WMO codes mapping
+    if (code === 0) return { label: 'Klarer Himmel', icon: Sun, color: 'text-amber-400' };
+    if ([1, 2, 3].includes(code)) return { label: 'Leicht bewölkt', icon: Cloud, color: 'text-blue-300' };
+    if ([45, 48].includes(code)) return { label: 'Nebel', icon: Cloud, color: 'text-gray-400' };
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { label: 'Regen', icon: CloudRain, color: 'text-blue-400' };
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return { label: 'Schnee', icon: Cloud, color: 'text-white' };
+    if ([95, 96, 99].includes(code)) return { label: 'Gewitter', icon: Zap, color: 'text-amber-500' };
+    return { label: 'Unbekannt', icon: Cloud, color: 'text-white/40' };
   };
 
   const fetchMessages = async () => {
@@ -1170,7 +1195,7 @@ export default function EventDetails() {
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto border border-white/5 rounded-[2.5rem] divide-y divide-white/5 mb-10 bg-white/[0.02] shadow-inner">
+            <div className="flex-1 overflow-y-auto border border-white/5 rounded-[2.5rem] divide-y divide-white/5 mb-10 bg-white/[0.02] shadow-inner pb-20">
               {availablePersons.map(p => (
                 <label key={p.id} className="flex items-center gap-6 p-6 hover:bg-white/[0.05] cursor-pointer transition-all group relative active:bg-white/[0.08]">
                   <div className="relative flex items-center justify-center">
@@ -1205,7 +1230,7 @@ export default function EventDetails() {
               )}
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 shrink-0 mt-auto">
               <button onClick={() => setShowBulkInviteModal(false)} className="w-full sm:flex-1 h-16 border border-white/10 text-white rounded-2xl font-bold hover:bg-white/5 transition-all text-xs uppercase tracking-widest active:scale-95">Abbrechen</button>
               <button 
                 onClick={handleBulkInvite} 

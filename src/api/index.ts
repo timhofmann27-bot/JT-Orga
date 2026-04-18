@@ -77,21 +77,22 @@ const requirePersonAuth = (req: any, res: any, next: any) => {
   res.status(401).json({ error: 'Unauthorized' });
 };
 
+// --- RATE LIMITING ---
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 login requests per `window`
+  message: { error: 'Zu viele Login-Versuche. Bitte in 15 Minuten erneut versuchen.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: false
+});
+
 // --- SCHEMAS ---
 const sanitizeText = (val: string) => sanitizeHtml(val, { allowedTags: [], allowedAttributes: {} });
 
 const loginSchema = z.object({
   username: z.string().min(1).max(50),
   password: z.string().min(1).max(100)
-});
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // 10 attempts per 15 min
-  message: { error: 'Zu viele Login-Versuche. Bitte in 15 Minuten erneut versuchen.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true,
 });
 
 const eventSchema = z.object({
@@ -117,19 +118,6 @@ const inviteSchema = z.object({
 
 const bulkInviteSchema = z.object({
   person_ids: z.array(z.number())
-});
-
-const checklistSchema = z.object({
-  item_name: z.string().min(1, 'Name ist erforderlich').max(100, 'Name ist zu lang').transform(sanitizeText),
-  notes: z.string().max(500, 'Notizen sind zu lang').optional().nullable().transform(v => v ? sanitizeText(v) : v)
-});
-
-const pollSchema = z.object({
-  question: z.string().min(1, 'Frage ist erforderlich').max(200, 'Frage ist zu lang').transform(sanitizeText)
-});
-
-const pollOptionSchema = z.object({
-  option_text: z.string().min(1, 'Option ist erforderlich').max(100, 'Option ist zu lang').transform(sanitizeText)
 });
 
 const respondSchema = z.object({
@@ -190,7 +178,7 @@ authRouter.post('/login', loginLimiter, (req, res) => {
     // Success - Reset counters
     db.prepare('UPDATE admin_users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?').run(user.id);
 
-    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '7d' });
     res.cookie('admin_token', token, { 
       httpOnly: true, 
       secure: true, 
@@ -575,13 +563,10 @@ adminRouter.get('/events/:id/checklist', (req: any, res) => {
 });
 
 adminRouter.post('/events/:id/checklist', (req, res) => {
-  try {
-    const { item_name, notes } = checklistSchema.parse(req.body);
-    const info = db.prepare('INSERT INTO checklists (event_id, item_name, notes) VALUES (?, ?, ?)').run(req.params.id, item_name, notes || null);
-    res.json({ id: info.lastInsertRowid });
-  } catch (e: any) {
-    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
-  }
+  const { item_name, notes } = req.body;
+  if (!item_name) return res.status(400).json({ error: 'Name ist erforderlich' });
+  const info = db.prepare('INSERT INTO checklists (event_id, item_name, notes) VALUES (?, ?, ?)').run(req.params.id, item_name, notes || null);
+  res.json({ id: info.lastInsertRowid });
 });
 
 adminRouter.delete('/events/:id/checklist/:itemId', (req, res) => {
@@ -604,31 +589,18 @@ adminRouter.get('/events/:id/polls', (req: any, res) => {
 });
 
 adminRouter.post('/events/:id/polls', (req, res) => {
-  try {
-    const { question, options } = req.body;
-    if (!question || !options || !Array.isArray(options)) return res.status(400).json({ error: 'Frage und Optionen sind erforderlich' });
-    
-    const validatedQuestion = pollSchema.parse({ question }).question;
-    if (options.length < 2 || options.length > 20) return res.status(400).json({ error: '2-20 Optionen erforderlich' });
-    
-    const sanitizedOptions: string[] = [];
+  const { question, options } = req.body;
+  if (!question || !options || !Array.isArray(options)) return res.status(400).json({ error: 'Frage und Optionen sind erforderlich' });
+  
+  db.transaction(() => {
+    const pollInfo = db.prepare('INSERT INTO polls (event_id, question) VALUES (?, ?)').run(req.params.id, question);
+    const pollId = pollInfo.lastInsertRowid;
+    const insertOpt = db.prepare('INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)');
     for (const opt of options) {
-      const validated = pollOptionSchema.parse({ option_text: opt }).option_text;
-      sanitizedOptions.push(validated);
+      insertOpt.run(pollId, opt);
     }
-    
-    db.transaction(() => {
-      const pollInfo = db.prepare('INSERT INTO polls (event_id, question) VALUES (?, ?)').run(req.params.id, validatedQuestion);
-      const pollId = pollInfo.lastInsertRowid;
-      const insertOpt = db.prepare('INSERT INTO poll_options (poll_id, option_text) VALUES (?, ?)');
-      for (const opt of sanitizedOptions) {
-        insertOpt.run(pollId, opt);
-      }
-    })();
-    res.json({ success: true });
-  } catch (e: any) {
-    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
-  }
+  })();
+  res.json({ success: true });
 });
 
 adminRouter.delete('/events/:id/polls/:pollId', (req, res) => {
@@ -648,30 +620,15 @@ adminRouter.get('/events/:id/messages', (req, res) => {
   res.json(msgs);
 });
 
-const MAX_MESSAGE_LENGTH = 1000;
-
 adminRouter.post('/events/:id/messages', (req, res) => {
   const { message } = req.body;
-  if (!message || typeof message !== 'string' || message.trim() === '') {
-    return res.status(400).json({ error: 'Nachricht fehlt' });
-  }
-  if (message.length > MAX_MESSAGE_LENGTH) {
-    return res.status(400).json({ error: `Nachricht ist zu lang (max. ${MAX_MESSAGE_LENGTH} Zeichen)` });
-  }
-  const sanitized = sanitizeHtml(message.trim(), {
-    allowedTags: ['b', 'i', 'em', 'strong', 'a'],
-    allowedAttributes: { 'a': ['href', 'target'] },
-    allowedSchemes: ['http', 'https', 'mailto']
-  });
-  const info = db.prepare('INSERT INTO event_messages (event_id, is_admin, message) VALUES (?, 1, ?)').run(req.params.id, sanitized);
+  if (!message || message.trim() === '') return res.status(400).json({ error: 'Nachricht fehlt' });
+  const info = db.prepare('INSERT INTO event_messages (event_id, is_admin, message) VALUES (?, 1, ?)').run(req.params.id, message.trim());
   res.json({ id: info.lastInsertRowid });
 });
 
 adminRouter.delete('/events/:id/messages/:msgId', (req, res) => {
-  const result = db.prepare('DELETE FROM event_messages WHERE id = ? AND event_id = ? AND is_admin = 1').run(req.params.msgId, req.params.id);
-  if (result.changes === 0) {
-    return res.status(403).json({ error: 'Keine Berechtigung oder nicht gefunden' });
-  }
+  db.prepare('DELETE FROM event_messages WHERE id = ? AND event_id = ?').run(req.params.msgId, req.params.id);
   res.json({ success: true });
 });
 
@@ -887,7 +844,7 @@ publicRouter.post('/register', (req, res) => {
       return newId;
     })();
 
-    const token = jwt.sign({ id: personId, name: request.name, type: 'person' }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: personId, name: request.name, type: 'person' }, JWT_SECRET, { expiresIn: '30d' });
     res.cookie('person_token', token, { 
       httpOnly: true, 
       secure: true, 
@@ -931,7 +888,7 @@ publicRouter.post('/login', loginLimiter, (req, res) => {
     // Success - Reset counters
     db.prepare('UPDATE persons SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?').run(person.id);
 
-    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '30d' });
     res.cookie('person_token', token, { 
       httpOnly: true, 
       secure: true, 
@@ -1038,24 +995,13 @@ publicRouter.get('/invite/:token', (req, res) => {
   });
 });
 
-const MAX_PUBLIC_MESSAGE_LENGTH = 500;
-
 publicRouter.post('/invite/:token/messages', (req, res) => {
   const { message } = req.body;
-  if (!message || typeof message !== 'string' || message.trim() === '') {
-    return res.status(400).json({ error: 'Nachricht fehlt' });
-  }
-  if (message.length > MAX_PUBLIC_MESSAGE_LENGTH) {
-    return res.status(400).json({ error: `Nachricht ist zu lang (max. ${MAX_PUBLIC_MESSAGE_LENGTH} Zeichen)` });
-  }
-  const sanitized = sanitizeHtml(message.trim(), {
-    allowedTags: ['b', 'i', 'em', 'strong'],
-    allowedAttributes: {}
-  });
+  if (!message || message.trim() === '') return res.status(400).json({ error: 'Nachricht fehlt' });
   const invitee = db.prepare('SELECT event_id, person_id FROM invitees WHERE token = ?').get(req.params.token) as any;
   if (!invitee) return res.status(404).json({ error: 'Einladung nicht gefunden' });
   
-  const info = db.prepare('INSERT INTO event_messages (event_id, person_id, message) VALUES (?, ?, ?)').run(invitee.event_id, invitee.person_id, sanitized);
+  const info = db.prepare('INSERT INTO event_messages (event_id, person_id, message) VALUES (?, ?, ?)').run(invitee.event_id, invitee.person_id, message.trim());
   res.json({ id: info.lastInsertRowid });
 });
 
@@ -1118,7 +1064,7 @@ publicRouter.post('/invite/:token/setup-profile', (req, res) => {
     db.prepare('UPDATE persons SET username = ?, password_hash = ? WHERE id = ?').run(username, hash, invitee.person_id);
 
     // Auto login after setup
-    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: person.id, name: person.name, type: 'person' }, JWT_SECRET, { expiresIn: '30d' });
     res.cookie('person_token', token, { 
       httpOnly: true, 
       secure: true, 

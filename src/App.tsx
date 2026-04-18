@@ -6,7 +6,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import AdminLayout from './components/AdminLayout';
-import PersonLayout from './components/PersonLayout';
 import Login from './pages/Login';
 import PersonDashboard from './pages/PersonDashboard';
 import Dashboard from './pages/Dashboard';
@@ -29,9 +28,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register-request" element={<RegisterRequest />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<PersonLayout />}>
-          <Route path="dashboard" element={<PersonDashboard />} />
-        </Route>
+        <Route path="/dashboard" element={<PersonDashboard />} />
         <Route path="/invite/:token" element={<PublicInvite />} />
         
         <Route path="/" element={<AdminLayout />}>

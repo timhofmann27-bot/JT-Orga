@@ -9,7 +9,6 @@ import { format, parseISO, addHours } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { fetchTransitConnections } from '../services/transitService';
 import { processConnections, EnrichedConnection, IntelligenceResult } from '../services/transitIntelligence';
-import { fetchWeather, getWeatherLabel } from '../lib/weather';
 import toast from 'react-hot-toast';
 
 interface TransitPlannerProps {
@@ -68,21 +67,50 @@ export default function TransitPlanner({
     const rawCity = locationParts[locationParts.length - 1];
     const queryCity = rawCity.replace(/[0-9]/g, '').trim() || destinationName;
 
-    const fetchWeatherData = async () => {
+    const fetchWeather = async () => {
       try {
-        const weatherData = await fetchWeather(destinationName, eventStartTime || new Date().toISOString());
-        if (weatherData) {
-          setWeather({ 
-            temp: weatherData.temp, 
-            text: getWeatherLabel(weatherData.code), 
-            code: weatherData.code 
-          });
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(queryCity)}&count=1&language=de`);
+        const geoData = await geoRes.json();
+        
+        if (geoData.results && geoData.results.length > 0) {
+          const { latitude, longitude, timezone } = geoData.results[0];
+          const tz = timezone || 'Europe/Berlin';
+          
+          // Request hourly + current weather as fallback. Add forecast_days=14 to ensure we have data.
+          const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m,weathercode&current_weather=true&timezone=${tz}&forecast_days=14`);
+          const wxData = await wxRes.json();
+          
+          let temp = wxData.current_weather?.temperature;
+          let code = wxData.current_weather?.weathercode;
+
+          if (eventStartTime && wxData.hourly) {
+            const eventDate = parseISO(eventStartTime);
+            // Reconstruct the exact format the API returns: "YYYY-MM-DDTHH:00"
+            const hourString = format(eventDate, "yyyy-MM-dd'T'HH:00");
+            const idx = wxData.hourly.time.indexOf(hourString);
+            
+            if (idx !== -1) {
+              temp = wxData.hourly.temperature_2m[idx];
+              code = wxData.hourly.weathercode[idx];
+            }
+          }
+          
+          if (temp !== undefined && code !== undefined) {
+            let text = 'Wolkig';
+            if (code <= 3) text = 'Klar bis heiter';
+            if (code >= 45 && code <= 48) text = 'Nebel';
+            if (code >= 51 && code <= 67) text = 'Regen';
+            if (code >= 71 && code <= 77) text = 'Schnee';
+            if (code >= 95) text = 'Gewitter';
+
+            setWeather({ temp, text, code });
+          }
         }
       } catch (e) {
         console.error('Weather fetch failed', e);
       }
     };
-    fetchWeatherData();
+    fetchWeather();
   }, [isOpen, destination, destinationName, eventStartTime]);
 
   const handleShareRoute = async (conn: EnrichedConnection) => {

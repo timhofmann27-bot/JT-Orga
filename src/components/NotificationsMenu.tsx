@@ -117,7 +117,7 @@ export default function NotificationsMenu({ apiPrefix }: NotificationsMenuProps)
               )}
             </div>
             
-            <div className="max-h-[400px] overflow-y-auto custom-scrollbar relative z-10">
+            <div className="max-h-[60vh] overflow-y-auto custom-scrollbar relative z-10" style={{ maxHeight: "calc(100vh - 150px)" }}>
               {notifications.length === 0 ? (
                 <div className="p-12 text-center flex flex-col items-center justify-center">
                   <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mb-4 border border-white/10">

@@ -135,7 +135,133 @@ export default function PersonDashboard() {
   const responded = upcoming.filter(i => i.status !== 'pending');
 
   return (
-    <div className="space-y-32">
+    <div className="min-h-screen bg-surface text-white selection:bg-white/20">
+      <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-2xl border-b border-white/5 pt-safe">
+        <div className="max-w-[1920px] mx-auto px-6 sm:px-12 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            {isAdmin ? (
+              <Link 
+                to="/" 
+                className="w-12 h-12 bg-white text-black rounded-[1.2rem] flex items-center justify-center border border-white/10 shadow-[0_0_30px_rgba(255,255,255,0.1)] relative overflow-hidden group hover:scale-105 active:scale-95 transition-all"
+                title="Zurück zum Admin-Dashboard"
+              >
+                <Calendar className="w-6 h-6 relative z-10 group-hover:rotate-12 transition-transform" />
+              </Link>
+            ) : (
+              <div className="w-12 h-12 bg-surface-elevated text-white rounded-[1.2rem] flex items-center justify-center border border-white/10 shadow-2xl relative overflow-hidden group">
+                <User className="w-6 h-6 relative z-10" />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+              </div>
+            )}
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Willkommen</span>
+              <span className="font-display text-2xl font-medium text-white tracking-tighter leading-none mt-1">{user?.name}</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Link 
+                to="/" 
+                className="hidden sm:flex items-center gap-2 text-[10px] text-white/40 hover:text-white transition-all font-black uppercase tracking-widest bg-white/5 px-6 py-3 rounded-2xl border border-white/5"
+              >
+                Verwaltung
+              </Link>
+            )}
+            <NotificationsMenu apiPrefix="/api/public" />
+            
+            <div className="relative">
+              <button 
+                onClick={() => setShowSettings(!showSettings)}
+                className="flex items-center gap-2 bg-white/5 text-white hover:bg-white/10 rounded-2xl border border-white/5 p-1 transition-all"
+              >
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-white/10 flex items-center justify-center">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-white/50" />
+                  )}
+                </div>
+                <ChevronDown className={`w-4 h-4 mr-2 transition-transform ${showSettings ? 'rotate-180' : ''}`} />
+              </button>
+              
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full right-0 mt-3 w-80 glass p-6 rounded-3xl border border-white/5 z-50"
+                  >
+                    <div className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-6">Profil bearbeiten</div>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const target = e.target as any;
+                      try {
+                        const res = await fetch('/api/public/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ 
+                            username: target.username.value,
+                            name: target.name.value,
+                            avatar_url: avatarUrl,
+                            currentPassword: target.currentPassword.value || null,
+                            newPassword: target.newPassword.value || null
+                          })
+                        });
+                        if (!res.ok) {
+                          const data = await res.json();
+                          throw new Error(data.error);
+                        }
+                        toast.success('Profil aktualisiert');
+                        target.currentPassword.value = '';
+                        target.newPassword.value = '';
+                        setShowSettings(false);
+                      } catch (e: any) {
+                        toast.error(e.message || 'Fehler beim Aktualisieren');
+                      }
+                    }} className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest pl-1">Profilbild</label>
+                        <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleFileChange} />
+                        <button 
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full flex items-center gap-3 bg-black/40 border border-white/5 rounded-xl p-3 text-white/50 text-sm hover:text-white transition-all"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Bild aus Galerie auswählen
+                        </button>
+                        {avatarUrl && <img src={avatarUrl} alt="Vorschau" className="w-16 h-16 rounded-xl mt-2 object-cover border border-white/10" />}
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest pl-1">Benutzername</label>
+                        <input name="username" defaultValue={user?.username} className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] font-black text-white/20 uppercase tracking-widest pl-1">Name</label>
+                        <input name="name" defaultValue={user?.name} className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <div className="pt-2 border-t border-white/5">
+                        <input name="currentPassword" type="password" placeholder="Aktuelles Passwort" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm mb-2" />
+                        <input name="newPassword" type="password" placeholder="Neues Passwort" className="w-full bg-black/40 border border-white/5 rounded-xl p-3 text-white text-sm" />
+                      </div>
+                      <button type="submit" className="w-full bg-white text-black font-black py-3 rounded-xl hover:bg-white/90 transition-all uppercase tracking-widest text-[10px]">Speichern</button>
+                    </form>
+                    <button 
+                      onClick={handleLogout}
+                      className="w-full mt-6 flex items-center justify-center gap-2 text-rose-400/60 hover:text-rose-400 transition-all text-[10px] uppercase font-black"
+                    >
+                      <LogOut className="w-3 h-3" /> Abmelden
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-[1920px] mx-auto px-6 sm:px-12 py-12 pb-32 lg:pb-12 space-y-32">
         {/* Offene Einladungen */}
         {pending.length > 0 && (
           <section>
@@ -329,6 +455,8 @@ export default function PersonDashboard() {
             </AnimatePresence>
           </section>
         )}
+      </main>
+      
       <TransitPlanner 
         isOpen={transitAktion !== null}
         onClose={() => setTransitAktion(null)}
