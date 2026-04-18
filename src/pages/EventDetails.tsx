@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, CheckCircle, XCircle, HelpCircle, Clock, Copy, Trash2, Plus, MapPin, Calendar, MessageSquare, UserPlus, Send, Edit2, Hourglass, Train, Compass, Trophy, Megaphone, Zap } from 'lucide-react';
-import { motion } from 'motion/react';
-import { format, parseISO } from 'date-fns';
+import { ArrowLeft, Users, CheckCircle, XCircle, HelpCircle, Clock, Copy, Trash2, Plus, MapPin, Calendar, MessageSquare, UserPlus, Send, Edit2, Hourglass, Train, Compass, Trophy, Megaphone, Zap, Sun, Cloud, Thermometer, Wind, CloudRain } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { format, parseISO, differenceInDays } from 'date-fns';
 import { de } from 'date-fns/locale';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
@@ -13,6 +13,7 @@ import { generateVCalendar } from '../lib/calendar';
 export default function EventDetails() {
   const { id } = useParams();
   if (!id) return <div className="p-8 text-center">Event nicht gefunden</div>;
+  const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'planning'>('overview');
   const [aktion, setAktion] = useState<any>(null);
   const [invites, setInvites] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
@@ -485,39 +486,159 @@ export default function EventDetails() {
         </div>
       </motion.div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-20 px-2 sm:px-0">
+      {/* Tab Navigation */}
+      <div className="flex overflow-x-auto hide-scrollbar gap-2 mb-10 px-2 sm:px-0 border-b border-white/5 pb-4">
         {[
-          { label: 'Dabei', count: stats.yes, total: stats.total, color: 'emerald', icon: CheckCircle },
-          { label: 'Vielleicht', count: stats.maybe, total: stats.total, color: 'amber', icon: HelpCircle },
-          { label: 'Abgesagt', count: stats.no, total: stats.total, color: 'red', icon: XCircle },
-          { label: 'Offen', count: stats.pending, total: stats.total, color: 'blue', icon: Hourglass }
-        ].map((s) => (
-          <div key={s.label} className="bg-surface-muted p-6 rounded-[2.5rem] border border-white/5 flex flex-col gap-6 group hover:bg-surface-elevated transition-colors">
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{s.label}</div>
-              <s.icon className={`w-3.5 h-3.5 text-${s.color}-400/30 group-hover:text-${s.color}-400 transition-colors`} />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <div className={`text-4xl font-serif font-bold text-white tracking-tighter`}>{s.count}</div>
-              <div className="text-[10px] font-bold text-white/20">
-                {s.total > 0 ? Math.round((s.count / s.total) * 100) : 0}%
-              </div>
-            </div>
-            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${s.total > 0 ? (s.count / s.total) * 100 : 0}%` }}
-                className={`h-full bg-${s.color}-500 transition-all`}
-              />
-            </div>
-          </div>
+          { id: 'overview', label: 'Übersicht', icon: Calendar },
+          { id: 'participants', label: 'Teilnehmer', icon: Users },
+          { id: 'planning', label: 'Planung & Orga', icon: Edit2 },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-3 px-6 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shrink-0 ${
+              activeTab === tab.id 
+                ? 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.15)] scale-100' 
+                : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white scale-95 hover:scale-100'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Main Content: Invites List */}
-        <div className="lg:col-span-2 space-y-10">
+      <AnimatePresence mode="wait">
+        {activeTab === 'overview' && (
+          <motion.div 
+            key="overview"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+          >
+            <div className="space-y-10">
+              {/* Weather Card */}
+              <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-[3rem] p-8 sm:p-10 border border-blue-500/20 shadow-2xl relative overflow-hidden group hover:border-blue-500/30 transition-all">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+                
+                <div className="relative z-10 flex flex-col gap-8">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-[10px] font-black text-blue-400/80 uppercase tracking-[0.4em] mb-2">Vorhersage</h3>
+                      <div className="text-2xl font-serif font-bold text-white tracking-tight">{aktion?.location || 'Ort unbekannt'}</div>
+                    </div>
+                    <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-500/20">
+                      <Sun className="w-7 h-7" />
+                    </div>
+                  </div>
+
+                  <div className="flex items-end gap-4">
+                    <div className="text-6xl sm:text-7xl font-sans font-bold text-white tracking-tighter leading-none">24°</div>
+                    <div className="text-lg text-blue-200/60 font-medium mb-1">Heiter bis wolkig</div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 pt-6 border-t border-blue-500/10">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><CloudRain className="w-3 h-3 mr-1" /> Regen</span>
+                      <span className="text-sm font-bold text-white">10%</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Wind className="w-3 h-3 mr-1" /> Wind</span>
+                      <span className="text-sm font-bold text-white">12 km/h</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Thermometer className="w-3 h-3 mr-1" /> Gefühlt</span>
+                      <span className="text-sm font-bold text-white">26°</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Info Card */}
+              <div className="bg-surface-muted rounded-[3rem] p-8 sm:p-10 border border-white/5 shadow-2xl space-y-10">
+                <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Details</h3>
+                <div className="space-y-8">
+                  <div className="flex gap-6 items-center">
+                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5">
+                      <Calendar className="w-5 h-5 text-white/20" />
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Erstellt</div>
+                      <div className="text-lg font-serif font-bold text-white tracking-tight">{aktion?.created_at ? format(parseISO(aktion.created_at), 'dd.MM.yyyy') : '-'}</div>
+                    </div>
+                  </div>
+                  {aktion?.response_deadline && (
+                    <div className="flex gap-6 items-center">
+                      <div className="w-12 h-12 bg-red-500/5 rounded-2xl flex items-center justify-center shrink-0 border border-red-500/10">
+                        <Clock className="w-5 h-5 text-red-400/30" />
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-red-500/30 uppercase tracking-widest mb-1">Deadline</div>
+                        <div className="text-lg font-serif font-bold text-white tracking-tight">{format(parseISO(aktion.response_deadline), 'dd.MM. HH:mm')}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-10">
+              {/* Action Map */}
+              {aktion?.location && (
+                <div className="bg-surface-muted rounded-[2.5rem] p-2 border border-white/5 shadow-2xl overflow-hidden group">
+                  <div className="rounded-[2.2rem] overflow-hidden grayscale contrast-[1.2] invert brightness-[0.8] opacity-60 group-hover:opacity-100 transition-opacity">
+                    <MapComponent location={aktion.location} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'participants' && (
+          <motion.div 
+            key="participants"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-10"
+          >
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 px-2 sm:px-0">
+              {[
+                { label: 'Dabei', count: stats.yes, total: stats.total, color: 'emerald', icon: CheckCircle },
+                { label: 'Vielleicht', count: stats.maybe, total: stats.total, color: 'amber', icon: HelpCircle },
+                { label: 'Abgesagt', count: stats.no, total: stats.total, color: 'red', icon: XCircle },
+                { label: 'Offen', count: stats.pending, total: stats.total, color: 'blue', icon: Hourglass }
+              ].map((s) => (
+                <div key={s.label} className="bg-surface-muted p-6 rounded-[2.5rem] border border-white/5 flex flex-col gap-6 group hover:bg-surface-elevated transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">{s.label}</div>
+                    <s.icon className={`w-3.5 h-3.5 text-${s.color}-400/30 group-hover:text-${s.color}-400 transition-colors`} />
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <div className={`text-4xl font-serif font-bold text-white tracking-tighter`}>{s.count}</div>
+                    <div className="text-[10px] font-bold text-white/20">
+                      {s.total > 0 ? Math.round((s.count / s.total) * 100) : 0}%
+                    </div>
+                  </div>
+                  <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${s.total > 0 ? (s.count / s.total) * 100 : 0}%` }}
+                      className={`h-full bg-${s.color}-500 transition-all`}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+              {/* Main Content: Invites List */}
+              <div className="lg:col-span-2 space-y-10">
           <div className="bg-surface-muted rounded-[3rem] border border-white/5 overflow-hidden shadow-2xl">
             <div className="p-8 sm:p-10 border-b border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white/[0.02]">
               <div className="space-y-1">
@@ -630,17 +751,7 @@ export default function EventDetails() {
           </div>
         </div>
 
-        {/* Sidebar: Actions & Info */}
         <div className="space-y-10">
-          {/* Action Map */}
-          {aktion?.location && (
-            <div className="bg-surface-muted rounded-[2.5rem] p-2 border border-white/5 shadow-2xl overflow-hidden group">
-              <div className="rounded-[2.2rem] overflow-hidden grayscale contrast-[1.2] invert brightness-[0.8] opacity-60 group-hover:opacity-100 transition-opacity">
-                <MapComponent location={aktion.location} />
-              </div>
-            </div>
-          )}
-
           {/* Add Person Card */}
           <div className="bg-white rounded-[3rem] p-8 sm:p-10 text-black shadow-2xl relative overflow-hidden group active:scale-[0.98] transition-all cursor-pointer" onClick={() => setShowBulkInviteModal(true)}>
             <div className="absolute top-0 right-0 w-40 h-40 bg-black/[0.03] rounded-bl-[5rem] -mr-12 -mt-12 transition-transform group-hover:scale-110" />
@@ -654,33 +765,21 @@ export default function EventDetails() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </motion.div>
+  )}
 
-          {/* Quick Info Card */}
-          <div className="bg-surface-muted rounded-[3rem] p-8 sm:p-10 border border-white/5 shadow-2xl space-y-10">
-            <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em]">Details</h3>
-            <div className="space-y-8">
-              <div className="flex gap-6 items-center">
-                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center shrink-0 border border-white/5">
-                  <Calendar className="w-5 h-5 text-white/20" />
-                </div>
-                <div>
-                  <div className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">Erstellt</div>
-                  <div className="text-lg font-serif font-bold text-white tracking-tight">{aktion?.created_at ? format(parseISO(aktion.created_at), 'dd.MM.yyyy') : '-'}</div>
-                </div>
-              </div>
-              {aktion?.response_deadline && (
-                <div className="flex gap-6 items-center">
-                  <div className="w-12 h-12 bg-red-500/5 rounded-2xl flex items-center justify-center shrink-0 border border-red-500/10">
-                    <Clock className="w-5 h-5 text-red-400/30" />
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-black text-red-500/30 uppercase tracking-widest mb-1">Deadline</div>
-                    <div className="text-lg font-serif font-bold text-white tracking-tight">{format(parseISO(aktion.response_deadline), 'dd.MM. HH:mm')}</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+  {activeTab === 'planning' && (
+    <motion.div 
+      key="planning"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+      className="grid grid-cols-1 lg:grid-cols-2 gap-10"
+    >
+      <div className="space-y-10">
 
           {/* Invitation Steps Card */}
           <div className="bg-surface-muted rounded-[3rem] p-8 border border-white/5 shadow-2xl relative overflow-hidden">
@@ -772,7 +871,9 @@ export default function EventDetails() {
               )}
             </div>
           </div>
+        </div>
 
+        <div className="space-y-10">
           {/* Polls Card */}
           <div className="bg-surface-muted rounded-[3rem] p-8 border border-white/5 shadow-2xl relative overflow-hidden">
             <div className="flex justify-between items-center mb-10 relative z-10">
@@ -869,9 +970,11 @@ export default function EventDetails() {
             </form>
           </div>
         </div>
-      </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
 
-      <ConfirmModal 
+  <ConfirmModal 
         isOpen={deleteInviteeId !== null}
         title="Einladung löschen"
         message="Möchtest du diese Einladung wirklich löschen? Der Link wird ungültig und die Antwort der Person geht verloren."

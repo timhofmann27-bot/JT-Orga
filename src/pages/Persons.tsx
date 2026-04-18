@@ -182,86 +182,108 @@ export default function Members() {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden backdrop-blur-sm shadow-2xl">
         {/* Table Header */}
-        <div className="hidden lg:grid lg:grid-cols-[60px_1.5fr_1fr_2fr_120px] gap-6 px-10 py-6 text-[9px] font-black text-white/10 uppercase tracking-[0.3em] border-b border-white/5">
+        <div className="hidden lg:grid lg:grid-cols-[80px_2fr_1.5fr_2fr_2fr_120px] gap-4 px-8 py-5 text-[9px] font-black text-white/20 uppercase tracking-[0.3em] border-b border-white/5 bg-white/[0.02]">
           <div className="flex justify-center">Sign</div>
-          <div>Name / Identität</div>
-          <div>Benutzername</div>
-          <div>Kontakt / Notiz</div>
-          <div className="text-right pr-4">Aktion</div>
+          <div>Name</div>
+          <div>User</div>
+          <div>Kontakt</div>
+          <div>Notiz</div>
+          <div className="text-right pr-4">Aktionen</div>
         </div>
 
-        <div className="space-y-px">
+        <div className="divide-y divide-white/5">
           {filteredMembers.map((member, i) => (
             <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.02, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.01, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               key={member.id} 
               className="group relative"
             >
-              <div className="lg:grid lg:grid-cols-[60px_1.5fr_1fr_2fr_120px] gap-6 px-10 py-5 bg-white/[0.01] hover:bg-white/[0.04] transition-all duration-300 items-center border border-transparent hover:border-white/5 rounded-2xl">
-                {/* Avatar / Sign */}
-                <div className="flex justify-center">
-                  <div className="w-10 h-10 rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center font-serif text-sm font-bold text-white/60 shadow-lg relative overflow-hidden group-hover:scale-105 transition-transform">
-                    <div className="relative z-10">{member.name.charAt(0).toUpperCase()}</div>
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-30" />
+              <div className="flex flex-col lg:grid lg:grid-cols-[80px_2fr_1.5fr_2fr_2fr_120px] gap-4 px-8 py-4 bg-transparent hover:bg-white/[0.04] transition-all duration-200 items-center">
+                {/* Avatar / Sign - Hidden on tiny mobile to save space, or kept small */}
+                <div className="hidden lg:flex justify-center">
+                  <div className="w-8 h-8 rounded-lg bg-surface-elevated border border-white/10 flex items-center justify-center font-serif text-[11px] font-bold text-white/40 shadow-sm relative overflow-hidden group-hover:text-white group-hover:border-white/20 transition-all">
+                    <span className="relative z-10">{member.name.charAt(0).toUpperCase()}</span>
                   </div>
                 </div>
 
-                {/* Name */}
-                <div className="flex flex-col gap-1">
-                  <span className="font-serif text-xl font-bold text-white transition-colors group-hover:text-white tracking-tighter">
-                    {member.name}
-                  </span>
-                  <div className="lg:hidden text-[9px] font-black text-white/20 uppercase tracking-widest">
-                    @{member.username || 'kein_user'}
+                {/* Name & Identity */}
+                <div className="flex flex-col min-w-0 w-full lg:w-auto">
+                  <div className="flex items-center justify-between lg:justify-start gap-4">
+                    <span className="font-serif text-lg font-bold text-white transition-colors tracking-tight truncate">
+                      {member.name}
+                    </span>
+                    {/* Actions on mobile (right side of name) */}
+                    <div className="lg:hidden flex items-center gap-1">
+                      <button 
+                        onClick={() => openEdit(member)}
+                        className="w-8 h-8 flex items-center justify-center text-white/20 active:text-white transition-all"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button 
+                        onClick={() => setDeleteId(member.id)}
+                        className="w-8 h-8 flex items-center justify-center text-white/20 active:text-red-400 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-1 text-[9px] font-black text-white/20 uppercase tracking-widest flex flex-wrap items-center gap-2">
+                    <span className="text-white/40">@{member.username || 'user'}</span>
+                    {(member.email || member.notes) && <span className="w-1 h-1 rounded-full bg-white/10" />}
+                    <span className="truncate">{member.email || (member.notes && `"${member.notes}"`)}</span>
                   </div>
                 </div>
 
                 {/* Username */}
-                <div className="hidden lg:block">
-                  <span className="text-xs font-mono text-white/30 group-hover:text-white/60 transition-colors">
+                <div className="hidden lg:block min-w-0">
+                  <span className="text-xs font-mono text-white/30 group-hover:text-white/60 transition-colors truncate block">
                     {member.username ? `@${member.username}` : '—'}
                   </span>
                 </div>
 
-                {/* Info / Email */}
-                <div className="flex flex-col sm:flex-row lg:items-center gap-4">
+                {/* Email */}
+                <div className="hidden lg:block min-w-0">
                   {member.email ? (
-                    <div className="flex items-center gap-2 text-xs text-white/40 font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500/50" />
+                    <div className="flex items-center gap-2 text-xs text-white/40 font-medium truncate">
+                      <div className="w-1 h-1 rounded-full bg-blue-500/30" />
                       {member.email}
                     </div>
                   ) : (
-                    <span className="text-white/10 text-[9px] font-black uppercase tracking-widest">Keine E-Mail</span>
+                    <span className="text-white/5 text-[9px] font-black uppercase tracking-widest">—</span>
                   )}
-                  {member.notes && (
-                    <div className="hidden xl:block h-3 w-px bg-white/10" />
-                  )}
-                  {member.notes && (
-                    <span className="text-xs text-white/20 italic truncate max-w-[200px]" title={member.notes}>
+                </div>
+
+                {/* Note */}
+                <div className="hidden lg:block min-w-0">
+                  {member.notes ? (
+                    <span className="text-xs text-white/20 italic truncate block max-w-full" title={member.notes}>
                       "{member.notes}"
                     </span>
+                  ) : (
+                    <span className="text-white/5 text-[9px] font-black uppercase tracking-widest">—</span>
                   )}
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center justify-end gap-1 opacity-10 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={() => openEdit(member)}
-                    className="w-9 h-9 flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 rounded-xl transition-all active:scale-90"
+                    className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 rounded-lg transition-all active:scale-90"
                     title="Bearbeiten"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button 
                     onClick={() => setDeleteId(member.id)}
-                    className="w-9 h-9 flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all active:scale-90"
+                    className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all active:scale-90"
                     title="Löschen"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
