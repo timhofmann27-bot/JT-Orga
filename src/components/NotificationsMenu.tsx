@@ -97,11 +97,11 @@ export default function NotificationsMenu({ apiPrefix }: NotificationsMenuProps)
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: 15, scale: 0.95, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(5px)' }}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 5, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="absolute right-0 mt-2 w-[calc(100vw-48px)] sm:w-96 bg-[#111] rounded-2xl shadow-2xl border border-white/10 overflow-hidden z-50 backdrop-blur-2xl max-w-[400px]"
+            className="fixed top-0 right-0 h-screen w-full sm:w-[400px] bg-[#111] border-l border-white/10 shadow-2xl z-50 flex flex-col"
           >
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5 relative z-10">
