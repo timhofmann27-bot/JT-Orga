@@ -53,8 +53,15 @@ export default function EventDetails() {
   }, [id]);
 
   useEffect(() => {
+    console.log('Weather effect triggered:', { 
+      hasAktion: !!aktion,
+      location: aktion?.location,
+      date: aktion?.date
+    });
     if (aktion?.location) {
       loadWeather(aktion.location, aktion.date);
+    } else {
+      console.log('Weather effect: no location, skipping');
     }
   }, [aktion?.location, aktion?.date]);
 
