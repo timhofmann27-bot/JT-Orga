@@ -15,6 +15,8 @@ export default function EventDetails() {
   if (!id) return <div className="p-8 text-center">Event nicht gefunden</div>;
   const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'planning'>('overview');
   const [aktion, setAktion] = useState<any>(null);
+  const [weather, setWeather] = useState<any>(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
   const [invites, setInvites] = useState<any[]>([]);
   const [persons, setPersons] = useState<any[]>([]);
   const [invitationSteps, setInvitationSteps] = useState<any[]>([]);
@@ -48,6 +50,69 @@ export default function EventDetails() {
     fetchPolls();
     fetchMessages();
   }, [id]);
+
+  useEffect(() => {
+    if (aktion?.location) {
+      fetchWeather(aktion.location, aktion.date);
+    }
+  }, [aktion?.location, aktion?.date]);
+
+  const fetchWeather = async (location: string, dateStr: string) => {
+    setWeatherLoading(true);
+    try {
+      // 1. Geocoding
+      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=de&format=json`);
+      const geoData = await geoRes.json();
+      
+      if (!geoData.results || geoData.results.length === 0) {
+        setWeather(null);
+        return;
+      }
+
+      const { latitude, longitude } = geoData.results[0];
+      const eventDate = parseISO(dateStr);
+      const isToday = differenceInDays(eventDate, new Date()) === 0;
+      
+      // 2. Weather
+      // If it's more than 14 days in the future, Open-Meteo might not have forecast. 
+      // But we can try the 16-day forecast.
+      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max&current_weather=true&timezone=auto`);
+      const weatherData = await weatherRes.json();
+
+      // Find the specific day in the daily forecast
+      const targetDateStr = format(eventDate, 'yyyy-MM-dd');
+      const dayIndex = weatherData.daily.time.indexOf(targetDateStr);
+
+      if (dayIndex !== -1) {
+        setWeather({
+          temp: Math.round(weatherData.daily.temperature_2m_max[dayIndex]),
+          tempMin: Math.round(weatherData.daily.temperature_2m_min[dayIndex]),
+          code: weatherData.daily.weathercode[dayIndex],
+          rainProb: weatherData.daily.precipitation_probability_max[dayIndex],
+          current: isToday ? Math.round(weatherData.current_weather.temperature) : null
+        });
+      } else {
+        // Fallback or past date
+        setWeather(null);
+      }
+    } catch (e) {
+      console.error('Weather fetch error:', e);
+      setWeather(null);
+    } finally {
+      setWeatherLoading(false);
+    }
+  };
+
+  const getWeatherInfo = (code: number) => {
+    // WMO codes mapping
+    if (code === 0) return { label: 'Klarer Himmel', icon: Sun, color: 'text-amber-400' };
+    if ([1, 2, 3].includes(code)) return { label: 'Leicht bewölkt', icon: Cloud, color: 'text-blue-300' };
+    if ([45, 48].includes(code)) return { label: 'Nebel', icon: Cloud, color: 'text-gray-400' };
+    if ([51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return { label: 'Regen', icon: CloudRain, color: 'text-blue-400' };
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return { label: 'Schnee', icon: Cloud, color: 'text-white' };
+    if ([95, 96, 99].includes(code)) return { label: 'Gewitter', icon: Zap, color: 'text-amber-500' };
+    return { label: 'Unbekannt', icon: Cloud, color: 'text-white/40' };
+  };
 
   const fetchMessages = async () => {
     try {
@@ -530,27 +595,49 @@ export default function EventDetails() {
                       <div className="text-2xl font-serif font-bold text-white tracking-tight">{aktion?.location || 'Ort unbekannt'}</div>
                     </div>
                     <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center text-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.3)] border border-blue-500/20">
-                      <Sun className="w-7 h-7" />
+                      {weather ? (
+                        (() => {
+                          const Info = getWeatherInfo(weather.code);
+                          return <Info.icon className={`w-7 h-7 ${Info.color}`} />;
+                        })()
+                      ) : (
+                        <Sun className="w-7 h-7 text-white/20" />
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-end gap-4">
-                    <div className="text-6xl sm:text-7xl font-sans font-bold text-white tracking-tighter leading-none">24°</div>
-                    <div className="text-lg text-blue-200/60 font-medium mb-1">Heiter bis wolkig</div>
-                  </div>
+                  {weatherLoading ? (
+                    <div className="h-20 flex items-center gap-4">
+                      <div className="w-16 h-12 bg-white/5 rounded-2xl animate-pulse" />
+                      <div className="w-32 h-6 bg-white/5 rounded-lg animate-pulse" />
+                    </div>
+                  ) : weather ? (
+                    <div className="flex items-end gap-4">
+                      <div className="text-6xl sm:text-7xl font-sans font-bold text-white tracking-tighter leading-none">
+                        {weather.current !== null ? `${weather.current}°` : `${weather.temp}°`}
+                      </div>
+                      <div className="text-lg text-blue-200/60 font-medium mb-1">
+                        {getWeatherInfo(weather.code).label}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-white/20 text-sm font-bold uppercase tracking-widest py-4">
+                      Keine Wetterdaten verfügbar
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-3 gap-4 pt-6 border-t border-blue-500/10">
                     <div className="flex flex-col gap-1">
                       <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><CloudRain className="w-3 h-3 mr-1" /> Regen</span>
-                      <span className="text-sm font-bold text-white">10%</span>
+                      <span className="text-sm font-bold text-white">{weather ? `${weather.rainProb}%` : '--'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Wind className="w-3 h-3 mr-1" /> Wind</span>
-                      <span className="text-sm font-bold text-white">12 km/h</span>
+                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Wind className="w-3 h-3 mr-1" /> Min</span>
+                      <span className="text-sm font-bold text-white">{weather ? `${weather.tempMin}°` : '--'}</span>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Thermometer className="w-3 h-3 mr-1" /> Gefühlt</span>
-                      <span className="text-sm font-bold text-white">26°</span>
+                      <span className="text-[9px] font-black uppercase text-blue-200/40 tracking-widest flex items-center"><Thermometer className="w-3 h-3 mr-1" /> Max</span>
+                      <span className="text-sm font-bold text-white">{weather ? `${weather.temp}°` : '--'}</span>
                     </div>
                   </div>
                 </div>
