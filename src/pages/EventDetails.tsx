@@ -33,6 +33,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import toast from "react-hot-toast";
+import Avatar from "../components/Avatar";
 import ConfirmModal from "../components/ConfirmModal";
 import MapComponent from "../components/MapComponent";
 import TransitPlanner from "../components/TransitPlanner";
@@ -952,28 +953,12 @@ export default function EventDetails() {
                         >
                           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                             <div className="flex items-center gap-5">
-                              <div
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 font-serif text-xl font-bold shadow-2xl relative overflow-hidden ${
-                                  invitee.status === "yes"
-                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/10"
-                                    : invitee.status === "no"
-                                      ? "bg-red-500/10 text-red-400 border border-red-500/10"
-                                      : invitee.status === "maybe"
-                                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/10"
-                                        : "bg-surface-elevated text-text-dim/20 border border-border"
-                                }`}
-                              >
-                                <div className="relative z-10">
-                                  {(
-                                    invitee.name_snapshot ||
-                                    invitee.current_name ||
-                                    "?"
-                                  )
-                                    .charAt(0)
-                                    .toUpperCase()}
-                                </div>
-                                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                              </div>
+                              <Avatar 
+                                name={invitee.name_snapshot || invitee.current_name || "?"} 
+                                avatarUrl={invitee.avatar_url || invitee.current_avatar_url}
+                                size="lg"
+                                className="!rounded-2xl"
+                              />
                               <div className="space-y-1.5">
                                 <div className="font-serif text-xl text-text flex items-center gap-3 tracking-tight font-bold">
                                   {invitee.name_snapshot ||
@@ -1072,7 +1057,7 @@ export default function EventDetails() {
                         Einladen
                       </h3>
                       <p className="text-sm text-surface/60 font-bold tracking-tight">
-                        Netzwerkmitglieder hinzufügen.
+                        Personen hinzufügen.
                       </p>
                     </div>
                     <div className="w-14 h-14 bg-surface text-accent rounded-2xl flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">

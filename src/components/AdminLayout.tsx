@@ -69,32 +69,23 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-surface text-text flex flex-col selection:bg-accent-muted/30">
       <header className="sticky top-0 z-50 bg-surface/80 backdrop-blur-2xl border-b border-border pt-safe">
-        <div className="max-w-[1920px] mx-auto px-6 sm:px-12 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-16">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-12 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-4 lg:gap-16">
             <Link
               to="/"
-              className="flex items-center gap-4 text-text font-serif text-2xl tracking-tighter group active:scale-95 transition-transform"
+              className="flex items-center gap-3 sm:gap-4 text-text font-serif tracking-tighter group active:scale-95 transition-transform"
             >
-              <div className="w-12 h-12 bg-accent text-surface rounded-2xl flex items-center justify-center transition-all group-hover:rotate-6 group-hover:scale-110 shadow-2xl shadow-accent/10 ring-1 ring-border">
-                <Calendar className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent text-surface rounded-2xl flex items-center justify-center transition-all group-hover:rotate-6 group-hover:scale-110 shadow-2xl shadow-accent/10 ring-1 ring-border shrink-0">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="flex flex-col -space-y-1">
-                <span className="font-black tracking-tighter italic">
+                <span className="font-black tracking-tighter italic text-xl sm:text-2xl">
                   JT-ORGA
                 </span>
-                <span className="micro-label !text-[8px] opacity-40 italic">
+                <span className="micro-label !text-[7px] sm:!text-[8px] opacity-40 italic">
                   Systemkonsole
                 </span>
               </div>
-              {currentUser && (
-                <div className="ml-4 pl-4 border-l border-border">
-                  <Avatar
-                    name={currentUser.username}
-                    avatarUrl={currentUser.avatar_url}
-                    size="sm"
-                  />
-                </div>
-              )}
             </Link>
             <nav className="hidden lg:flex gap-1 bg-surface-elevated rounded-2xl p-1 border border-border">
               {navItems.map((item) => {
@@ -127,29 +118,39 @@ export default function AdminLayout() {
               })}
             </nav>
           </div>
-          <div className="flex items-center gap-6">
-            <NotificationsMenu apiPrefix="/api/admin" />
-            <div className="h-6 w-px bg-border hidden sm:block" />
-            <button
-              onClick={handleLogout}
-              className="group flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-surface-elevated border border-border hover:bg-danger/10 hover:border-danger/20 hover:text-danger transition-all active:scale-95 group"
-            >
-              <LogOut className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              <span className="hidden xl:inline text-[10px] font-black uppercase tracking-widest">
-                Abmelden
-              </span>
-            </button>
-            <button
-              onClick={toggleTheme}
-              className="group flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-surface-elevated border border-border hover:bg-accent-muted transition-all active:scale-95"
-              title="Wechsel zwischen Hell- und Dunkelmodus"
-            >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4" />
-              ) : (
-                <Moon className="w-4 h-4" />
+          <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+              {currentUser && (
+                <div className="flex items-center border-r border-border pr-2 sm:pr-4 sm:mr-2">
+                  <Avatar
+                    name={currentUser.username}
+                    avatarUrl={currentUser.avatar_url}
+                    size="sm"
+                    className="w-8 h-8 sm:w-10 sm:h-10 text-[10px] sm:text-xs"
+                  />
+                </div>
               )}
-            </button>
+            <NotificationsMenu apiPrefix="/api/admin" />
+            <div className="h-6 w-px bg-border shrink-0 hidden sm:block" />
+            <div className="flex items-center gap-1 bg-surface-elevated/50 p-1 border border-border rounded-[1.25rem] shrink-0">
+              <button
+                onClick={toggleTheme}
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-text-dim hover:text-text hover:bg-surface-elevated transition-all active:scale-95 shrink-0"
+                title="Wechsel zwischen Hell- und Dunkelmodus"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl text-text-dim hover:text-danger hover:bg-danger/10 transition-all active:scale-95 shrink-0"
+                title="Abmelden"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
       </header>

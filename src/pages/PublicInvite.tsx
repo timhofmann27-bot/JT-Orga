@@ -5,6 +5,7 @@ import { format, parseISO, differenceInSeconds } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
 import toast from 'react-hot-toast';
+import Avatar from '../components/Avatar';
 import MapComponent from '../components/MapComponent';
 import TransitPlanner from '../components/TransitPlanner';
 import { generateVCalendar } from '../lib/calendar';
@@ -47,7 +48,7 @@ function Countdown({ deadline }: { deadline: string }) {
       <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.03] to-transparent pointer-events-none" />
       <div className="flex items-center gap-3 mb-6">
         <div className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-        <span className="micro-label !text-red-400/60 uppercase tracking-[0.3em]">Antwort ausstehend</span>
+        <span className="micro-label !text-red-400/60 uppercase tracking-[0.3em]">Rückmeldung offen</span>
       </div>
       <div className="flex gap-10 font-serif text-5xl font-black text-white tracking-widest leading-none">
         {days > 0 && (
@@ -474,10 +475,10 @@ export default function PublicInvite() {
               <h2 className="text-text/40 font-serif italic text-4xl sm:text-5xl tracking-[-0.04em] leading-none">
                 Grüß dich {invitee?.name_snapshot || invitee?.name},
               </h2>
-              <p className="text-text font-display font-medium text-2xl sm:text-3xl uppercase tracking-[0.2em] leading-[1.1] max-w-lg">
-                Es ist an Zeit Stärke für <br />
-                <span className="text-text/50 italic font-serif lowercase tracking-tighter pr-3 text-3xl sm:text-4xl">die</span> 
-                Heimat zu zeigen.
+              <p className="text-text font-display font-medium text-2xl sm:text-3xl uppercase tracking-[0.2em] leading-[1.1] max-w-lg text-center">
+                Es ist an der Zeit, gemeinsam <br />
+                <span className="text-text/50 italic font-serif lowercase tracking-tighter pr-3 text-3xl sm:text-4xl">für</span> 
+                unsere Ziele einzustehen.
               </p>
             </div>
 
@@ -522,13 +523,13 @@ export default function PublicInvite() {
                       onClick={(e) => { e.stopPropagation(); setShowTransit(true); }}
                       className="bg-surface-elevated/90 hover:bg-surface-elevated backdrop-blur-3xl border border-border px-6 py-3 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-text transition-all active:scale-95 shadow-lg"
                     >
-                      <Train className="w-4 h-4" /> Route
+                      <Train className="w-4 h-4" /> Anfahrt
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); generateVCalendar(aktion, window.location.href); }}
                       className="bg-text text-surface px-8 py-3 rounded-2xl flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl hover:opacity-90"
                     >
-                      <Calendar className="w-4 h-4" /> Exportieren
+                      <Calendar className="w-4 h-4" /> Kalender
                     </button>
                   </div>
                 </motion.div>
@@ -577,9 +578,9 @@ export default function PublicInvite() {
 
               <div className={`grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16 ${isDeadlinePassed ? 'opacity-20 pointer-events-none grayscale' : ''}`}>
                 {[
-                  { id: 'yes', label: 'Einsatzbereit', icon: CheckCircle, color: 'accent' },
-                  { id: 'no', label: 'Abwesend', icon: XCircle, color: 'surface' },
-                  { id: 'maybe', label: 'Unklar', icon: HelpCircle, color: 'surface' }
+                  { id: 'yes', label: 'Bin dabei', icon: CheckCircle, color: 'accent' },
+                  { id: 'no', label: 'Leider nein', icon: XCircle, color: 'surface' },
+                  { id: 'maybe', label: 'Vielleicht', icon: HelpCircle, color: 'surface' }
                 ].map((opt) => (
                   <motion.label 
                     key={opt.id}
@@ -817,10 +818,10 @@ export default function PublicInvite() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                    <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-                   <span className="micro-label uppercase tracking-[0.3em]">Kommunikationsbereich</span>
+                   <span className="micro-label uppercase tracking-[0.3em]">Nachrichten & Austausch</span>
                 </div>
                 <h2 className="text-4xl sm:text-6xl font-serif font-black text-text tracking-tighter leading-none">Pinnwand</h2>
-                <p className="text-text/30 font-medium text-lg leading-tight tracking-tight italic">Echte Gespräche, keine Filter.</p>
+                <p className="text-text/30 font-medium text-lg leading-tight tracking-tight italic">Einfach mal Hallo sagen oder Details klären.</p>
               </div>
               <div className="w-16 h-16 bg-surface-elevated rounded-3xl flex items-center justify-center text-text/10 group-hover:text-text/20 transition-colors">
                  <MessageSquare className="w-8 h-8" />
@@ -830,7 +831,7 @@ export default function PublicInvite() {
             <div className="space-y-10 mb-16">
               {messages.length === 0 ? (
                 <div className="text-center py-24 px-4 bg-surface-elevated/10 rounded-4xl border border-border border-dashed">
-                   <p className="text-text/20 text-[10px] font-black uppercase tracking-[0.5em]">System bereit. Warten auf Signale...</p>
+                   <p className="text-text/20 text-[10px] font-black uppercase tracking-[0.5em]">Noch keine Nachrichten vorhanden...</p>
                 </div>
               ) : (
                 messages.map((msg, i) => (
@@ -845,11 +846,11 @@ export default function PublicInvite() {
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-3">
                           <span className={`font-serif font-black text-2xl tracking-tighter leading-none ${msg.is_admin ? 'text-accent' : 'text-text'}`}>
-                            {msg.is_admin ? (aktion?.title || 'Einsatzleitung') : msg.person_name}
+                            {msg.is_admin ? (aktion?.title || 'Veranstalter') : msg.person_name}
                           </span>
                           {msg.is_admin && (
                             <div className="bg-accent/20 px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest text-accent">
-                               ORGA
+                               ADMIN
                             </div>
                           )}
                         </div>
@@ -879,7 +880,7 @@ export default function PublicInvite() {
                 <textarea
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
-                  placeholder="Deine Nachricht an den Hub..."
+                  placeholder="Schreib etwas..."
                   className="w-full bg-surface-elevated border border-border rounded-[2.5rem] p-10 pr-24 text-text text-xl font-serif italic placeholder:text-text/20 outline-none focus:border-border/80 transition-all resize-none h-48 focus:bg-surface-elevated/80 shadow-inner"
                 />
                 <motion.button 
@@ -894,7 +895,7 @@ export default function PublicInvite() {
               </form>
             ) : (
               <div className="bg-surface-elevated border-dashed border-2 border-border rounded-4xl p-10 text-center">
-                <p className="text-text/30 text-sm font-medium leading-relaxed italic">Erstelle unten ein Profil, um Signale an den Hub zu senden.</p>
+                <p className="text-text/30 text-sm font-medium leading-relaxed italic">Erstelle unten ein Profil, um Nachrichten zu schreiben.</p>
               </div>
             )}
           </div>
@@ -914,12 +915,12 @@ export default function PublicInvite() {
                     <span className="micro-label">Teilnehmerliste</span>
                   </div>
                   <h2 className="text-5xl sm:text-7xl font-serif font-black text-text tracking-tighter leading-none">
-                    Dabei
+                    Gästeliste
                   </h2>
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                   <div className="text-6xl font-serif font-black text-text/5 leading-none">/0{data.participants.length}</div>
-                   <span className="micro-label !text-text/30 tracking-[0.4em]">Teilnehmer</span>
+                   <div className="text-6xl font-serif font-black text-text/5 leading-none">{data.participants.length}</div>
+                   <span className="micro-label !text-text/30 tracking-[0.4em]">Personen</span>
                 </div>
               </div>
               
@@ -933,20 +934,23 @@ export default function PublicInvite() {
                     className="flex items-center justify-between p-10 rounded-4xl premium-card border-border shadow-none hover:bg-surface-elevated transition-colors group"
                   >
                     <div className="flex items-center gap-10">
-                      <div className="w-20 h-20 rounded-3xl bg-surface-elevated text-text border border-border flex items-center justify-center font-serif font-black text-4xl shadow-xl group-hover:scale-105 transition-transform duration-500">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
+                      <Avatar 
+                        name={p.name} 
+                        avatarUrl={p.avatar_url}
+                        size="xl"
+                        className="rounded-3xl shadow-xl transition-transform duration-500 group-hover:scale-105"
+                      />
                       <div className="space-y-2">
                         <div className="font-black text-text text-3xl font-serif tracking-tighter leading-none">
                           {p.name}
                         </div>
                         <div className="flex items-center gap-3">
-                          {p.status === 'yes' && <div className="micro-label !text-accent">Einsatzbereit</div>}
-                          {p.status === 'maybe' && <div className="micro-label !text-amber-400">Unklar</div>}
-                          {p.status === 'no' && <div className="micro-label !text-rose-400">Abgewiesen</div>}
+                          {p.status === 'yes' && <div className="micro-label !text-accent">Bin dabei</div>}
+                          {p.status === 'maybe' && <div className="micro-label !text-amber-400">Vielleicht</div>}
+                          {p.status === 'no' && <div className="micro-label !text-rose-400">Abgesagt</div>}
                           {p.guests_count > 0 && (
                             <div className="micro-label !text-text/30 ml-2 border-l border-border pl-4">
-                              +{p.guests_count} Gäste
+                              + {p.guests_count} Begleitung
                             </div>
                           )}
                         </div>
@@ -970,11 +974,11 @@ export default function PublicInvite() {
               <div className="relative z-10">
                 <div className="flex items-center gap-3 mb-8">
                    <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
-                   <span className="micro-label uppercase tracking-[0.3em]">Identitäts-Protokoll</span>
+                   <span className="micro-label uppercase tracking-[0.3em]">Dein Profil</span>
                 </div>
-                <h2 className="text-5xl sm:text-7xl font-serif font-black text-text mb-8 tracking-tighter leading-none">Profil <span className="text-text/30 italic">Wählen</span></h2>
+                <h2 className="text-5xl sm:text-7xl font-serif font-black text-text mb-8 tracking-tighter leading-none">Profil <span className="text-text/30 italic">erstellen</span></h2>
                 <p className="text-text/60 mb-16 font-medium leading-[1.3] text-xl tracking-tight max-w-sm italic">
-                  Erstelle ein Profil, um deine Signale zu festigen und operative Updates zu erhalten.
+                  Erstelle ein Profil, um Zusagen zu geben, Abzustimmen und auf dem Laufenden zu bleiben.
                 </p>
                 
                 <form onSubmit={handleSetupProfile} className="space-y-10">
@@ -1032,8 +1036,8 @@ export default function PublicInvite() {
                   <CheckCircle className="w-12 h-12" />
                 </div>
                 <div className="text-left space-y-2">
-                  <div className="font-serif text-4xl font-black text-text tracking-tighter leading-none">Identität Bestätigt</div>
-                  <div className="text-text/50 font-medium text-lg leading-tight tracking-tight italic">Einsatzprotokoll {currentUser.username} läuft.</div>
+                  <div className="font-serif text-4xl font-black text-text tracking-tighter leading-none">Eingeloggt</div>
+                  <div className="text-text/50 font-medium text-lg leading-tight tracking-tight italic">Als {currentUser.username} verifiziert.</div>
                 </div>
               </div>
               <Link 
@@ -1057,7 +1061,7 @@ export default function PublicInvite() {
                    <span className="micro-label !text-amber-400/80 uppercase tracking-[0.3em]">Login erforderlich</span>
                 </div>
                 <h2 className="text-5xl sm:text-7xl font-serif font-black text-text mb-8 tracking-tighter leading-none">
-                  {invitee.is_admin_account ? 'Einsatzleitung' : 'Rückruf'} <span className="text-text/30 italic">{invitee.is_admin_account ? 'Bestätigen' : 'Notwendig'}</span>
+                  {invitee.is_admin_account ? 'Admin-Bereich' : 'Anmeldung'} <span className="text-text/30 italic">{invitee.is_admin_account ? 'bestätigen' : 'erforderlich'}</span>
                 </h2>
                 <p className="text-text/60 mb-16 font-medium leading-[1.3] text-xl tracking-tight max-w-sm italic">
                   {invitee.is_admin_account 
