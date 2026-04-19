@@ -74,8 +74,8 @@ export default function Breadcrumb() {
   const items = getBreadcrumbItems();
 
   return (
-    <nav className="mb-8 pb-4 border-b border-white/5">
-      <ol className="flex items-center gap-2 text-white/40 text-[12px] font-black uppercase tracking-[0.2em]">
+    <nav className="mb-8 pb-4 border-b border-border">
+      <ol className="flex items-center gap-2 text-text-dim text-[12px] font-black uppercase tracking-[0.2em]">
         {items.map((item, index) => (
           <React.Fragment key={item.path}>
             {index > 0 && (
@@ -84,11 +84,11 @@ export default function Breadcrumb() {
               </span>
             )}
             {index === items.length - 1 ? (
-              <span className="text-white">{item.label}</span>
+              <span className="text-text">{item.label}</span>
             ) : (
               <NavLink 
                 to={item.path} 
-                className="hover:text-white transition-colors"
+                className="hover:text-text transition-colors"
                 end
               >
                 {item.label}

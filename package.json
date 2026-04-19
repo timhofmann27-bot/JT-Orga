@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx start.ts",
+    "dev": "tsx server.ts",
     "build": "vite build",
     "start": "node --experimental-strip-types server.ts",
     "preview": "vite preview",
@@ -30,6 +30,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "express-rate-limit": "^8.3.2",
+    "firebase": "^12.12.0",
     "helmet": "^8.1.0",
     "idb": "^8.0.3",
     "jsonwebtoken": "^9.0.3",

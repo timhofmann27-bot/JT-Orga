@@ -35,7 +35,7 @@ export default function SentryTestPage() {
         <div className="p-8 text-center">
           <h2 className="text-2xl text-white font-bold mb-4">Oops!</h2>
           <p className="text-white/60 mb-4">
-            {error?.message || 'Something went wrong'}
+            {(error as any)?.message || 'Something went wrong'}
           </p>
           <button
             onClick={resetError}

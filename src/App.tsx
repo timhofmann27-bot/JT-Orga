@@ -64,7 +64,22 @@ export default function App() {
     <BrowserRouter>
       <Analytics />
       <KeyboardShortcutsHandler />
-      <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
+      <Toaster 
+        position="top-center" 
+        toastOptions={{ 
+          duration: 4000,
+          style: {
+            background: '#0e0e0e',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: '16px',
+            fontSize: '12px',
+            fontWeight: '600',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase'
+          }
+        }} 
+      />
       <OfflineBanner />
       <InstallAppBanner />
       <Suspense fallback={<PageSkeleton />}>

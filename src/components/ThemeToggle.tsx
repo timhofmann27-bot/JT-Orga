@@ -1,5 +1,5 @@
 import { Moon, Sun, Monitor } from 'lucide-react';
-import { useTheme } from './ThemeProvider';
+import { useTheme, type Theme } from './ThemeProvider';
 import { cn } from '../lib/utils';
 import { hapticFeedback } from '../lib/utils';
 

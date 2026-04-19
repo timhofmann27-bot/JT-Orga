@@ -9,9 +9,9 @@ export function Skeleton({ className, animation = 'pulse' }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'bg-white/5 rounded-lg',
+        'bg-surface-elevated rounded-lg',
         animation === 'pulse' && 'animate-pulse',
-        animation === 'shine' && 'relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent before:animate-shine',
+        animation === 'shine' && 'relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-white/5 before:to-transparent before:animate-shine',
         className
       )}
       aria-hidden="true"

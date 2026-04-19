@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { cn } from '../../lib/utils';
 
 interface AvatarProps {
@@ -29,7 +30,7 @@ export function Avatar({
     square: 'rounded-xl',
   };
 
-  const [hasError, setHasError] = src ? [false, () => {}] : [true, () => {}];
+  const [hasError, setHasError] = useState(false);
 
   return (
     <div

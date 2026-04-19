@@ -42,7 +42,7 @@ function Countdown({ deadline }: { deadline: string }) {
       <div className="text-[9px] font-black text-red-400 uppercase tracking-widest mb-1 flex items-center gap-1">
         <AlertCircle className="w-3 h-3" /> Frist läuft ab
       </div>
-      <div className="flex gap-1.5 font-mono text-sm font-black text-white">
+      <div className="flex gap-1.5 font-mono text-sm font-black text-text">
         {days > 0 && (
           <div className="flex flex-col items-center">
             <span>{days}T</span>
@@ -312,22 +312,22 @@ export default function PersonDashboard() {
                         className={`flex items-center gap-5 p-5 rounded-2xl border transition-all group active:scale-[0.98] ${
                           s.variant === 'highlight'
                             ? 'bg-amber-500/5 border-amber-500/20 hover:bg-amber-500/10'
-                            : 'bg-white/[0.02] border-white/5 hover:bg-white/[0.04]'
+                            : 'bg-surface-elevated border-border hover:bg-accent-muted'
                         }`}
                       >
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
                           s.variant === 'highlight'
                             ? 'bg-amber-500/10 text-amber-400'
-                            : 'bg-white/5 text-white/30'
+                            : 'bg-accent-muted text-text-dim'
                         }`}>
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-white mb-0.5">{s.title}</div>
-                          <div className="text-xs text-white/40">{s.message}</div>
+                          <div className="text-sm font-bold text-text mb-0.5">{s.title}</div>
+                          <div className="text-xs text-text-muted">{s.message}</div>
                         </div>
                         {s.action && (
-                          <div className="text-[10px] font-black text-white/30 uppercase tracking-widest group-hover:text-white transition-colors shrink-0">
+                          <div className="text-[10px] font-black text-text-dim uppercase tracking-widest group-hover:text-text transition-colors shrink-0">
                             {s.action}
                           </div>
                         )}
@@ -368,10 +368,10 @@ export default function PersonDashboard() {
             transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="flex items-center gap-4 mb-8"
           >
-            <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-white/40">
+            <div className="w-10 h-10 bg-surface-elevated rounded-xl flex items-center justify-center text-text-dim">
               <BarChart3 className="w-5 h-5" />
             </div>
-            <h2 className="text-2xl font-serif font-bold text-white tracking-tighter">Deine Übersicht</h2>
+            <h2 className="text-2xl font-serif font-bold text-text tracking-tighter">Deine Übersicht</h2>
           </motion.div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -380,14 +380,14 @@ export default function PersonDashboard() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-surface-muted p-6 rounded-[2rem] border border-white/5 shadow-xl"
+              className="bg-surface-muted p-6 rounded-[2rem] border border-border shadow-xl"
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em]">Teilnahmequote</span>
-                <Target className="w-4 h-4 text-white/10" />
+                <span className="text-[9px] font-black text-text-dim uppercase tracking-[0.2em]">Teilnahmequote</span>
+                <Target className="w-4 h-4 text-text-dim-20" />
               </div>
-              <div className="text-4xl font-serif font-bold text-white tracking-tighter">{participationRate}%</div>
-              <div className="h-1.5 w-full bg-white/5 rounded-full mt-4 overflow-hidden">
+              <div className="text-4xl font-serif font-bold text-text tracking-tighter">{participationRate}%</div>
+              <div className="h-1.5 w-full bg-surface-elevated rounded-full mt-4 overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${participationRate}%` }}
@@ -395,7 +395,7 @@ export default function PersonDashboard() {
                   className="h-full bg-emerald-500 rounded-full"
                 />
               </div>
-              <div className="text-[9px] text-white/20 mt-2 font-bold uppercase tracking-widest">
+              <div className="text-[9px] text-text-dim mt-2 font-bold uppercase tracking-widest">
                 {totalYes} von {totalInvited} Events
               </div>
             </motion.div>

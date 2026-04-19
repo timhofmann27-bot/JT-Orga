@@ -93,7 +93,7 @@ export function useTranslation() {
   React.useEffect(() => {
     const listener = () => setLang(getLanguage());
     listeners.add(listener);
-    return () => listeners.delete(listener);
+    return () => { listeners.delete(listener); };
   }, []);
   
   return {

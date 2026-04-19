@@ -21,6 +21,15 @@
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
-  }
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "public",
+    "storybook-static",
+    "tests",
+    "**/*.stories.tsx"
+  ]
 }
