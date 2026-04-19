@@ -104,15 +104,15 @@ body {
   @apply transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)];
 }
 
-@utility micro-hover:hover {
+.micro-hover:hover {
   @apply scale-[1.02] shadow-lg;
 }
 
-@utility micro-hover:active {
+.micro-hover:active {
   @apply scale-[0.98];
 }
 
-@utility micro-hover:focus-visible {
+.micro-hover:focus-visible {
   @apply ring-2 ring-white/20 ring-offset-2 ring-offset-transparent;
 }
 
