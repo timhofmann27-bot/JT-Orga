@@ -14,6 +14,7 @@ import { OfflineBanner } from './components/ui/OfflineBanner';
 import { useWebVitals, trackPageView } from './lib/analytics';
 import { useKeyboardShortcuts, ShortcutsModal } from './lib/keyboardShortcuts.tsx';
 import InstallAppBanner from './components/InstallAppBanner';
+import NotificationManager from './components/NotificationManager';
 
 const Dashboard = React.lazy(() => import('./pages/Dashboard'));
 const EventDetails = React.lazy(() => import('./pages/EventDetails'));
@@ -23,6 +24,7 @@ const PublicInvite = React.lazy(() => import('./pages/PublicInvite'));
 const RegisterRequest = React.lazy(() => import('./pages/RegisterRequest'));
 const Register = React.lazy(() => import('./pages/Register'));
 const RegistrationRequests = React.lazy(() => import('./pages/RegistrationRequests'));
+const BroadcastNotification = React.lazy(() => import('./pages/BroadcastNotification'));
 
 function Analytics() {
   const location = useLocation();
@@ -64,6 +66,7 @@ export default function App() {
     <BrowserRouter>
       <Analytics />
       <KeyboardShortcutsHandler />
+      <NotificationManager />
       <Toaster 
         position="top-center" 
         toastOptions={{ 
@@ -97,6 +100,7 @@ export default function App() {
             <Route path="persons" element={<Persons />} />
             <Route path="stats" element={<Stats />} />
             <Route path="registration-requests" element={<RegistrationRequests />} />
+            <Route path="broadcast" element={<BroadcastNotification />} />
           </Route>
         </Routes>
       </Suspense>

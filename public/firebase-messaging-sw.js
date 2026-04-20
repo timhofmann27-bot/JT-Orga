@@ -1,47 +1,26 @@
-import { initializeApp } from 'firebase/app';
-import { getMessaging, onBackgroundMessage } from 'firebase/messaging/sw';
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-const app = initializeApp(firebaseConfig);
-const messaging = getMessaging(app);
-
-onBackgroundMessage(messaging, (payload) => {
-  const { title, body, icon } = payload.notification || {};
-  
-  if (title && body) {
-    self.registration.showNotification(title, {
-      body,
-      icon: icon || '/icon.svg',
-      badge: '/icon.svg',
-      vibrate: [200, 100, 200],
-      data: payload.data,
-    });
-  }
+// These values are from your firebase-applet-config.json
+firebase.initializeApp({
+  projectId: "gen-lang-client-0892608340",
+  appId: "1:125742770018:web:090acdba5c079228d52e3b",
+  apiKey: "AIzaSyCMcW7iSo5-cMcIATzgzBW9lS-IXQiRQCE",
+  authDomain: "gen-lang-client-0892608340.firebaseapp.com",
+  messagingSenderId: "125742770018",
 });
 
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const urlToOpen = event.notification.data?.url || '/';
-  
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/vite.svg',
+    data: payload.data
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });

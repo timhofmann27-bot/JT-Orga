@@ -1,228 +1,455 @@
-# JT-Orga Deployment Guide
+# 🚀 JT-ORGA Deployment Guide
+## Hostinger VPS Docker Container Setup
 
-## Quick Start
+---
+
+## 📋 Voraussetzungen
+
+- Hostinger VPS mit Ubuntu 20.04/22.04
+- Domain oder Subdomain (optional)
+- SSH-Zugang zum VPS
+- Git installiert
+
+---
+
+## 🔧 SCHRITT 1: VPS Vorbereiten
+
+### 1.1 SSH Verbindung herstellen
+```bash
+ssh root@deine-vps-ip
+```
+
+### 1.2 System aktualisieren
+```bash
+apt update && apt upgrade -y
+```
+
+### 1.3 Docker installieren
+```bash
+# Docker installieren
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+# Docker Compose installieren
+apt install docker-compose-plugin -y
+
+# Docker Benutzergruppe erstellen
+usermod -aG docker $USER
+```
+
+**Wichtig:** Nach dem letzten Befehl einmal ausloggen und wieder einloggen!
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/your-username/JT-Orga.git
-cd JT-Orga
+exit
+# Dann wieder einloggen
+ssh root@deine-vps-ip
+```
 
-# 2. Setup environment
-./setup.sh
+### 1.4 Docker testen
+```bash
+docker --version
+docker compose version
+```
 
-# 3. Configure domain (edit Caddyfile)
+---
+
+## 📦 SCHRITT 2: Projekt Klonen
+
+### 2.1 Repository klonen
+```bash
+cd /var/www
+git clone https://github.com/timhofmann27-bot/JT-Orga.git jt-orga
+cd jt-orga
+```
+
+### 2.2 Environment Datei erstellen
+```bash
+cp .env.example .env
+nano .env
+```
+
+### 2.3 .env Datei bearbeiten
+
+Füge deine secrets ein:
+```bash
+# JWT Secret (zufälligen String generieren)
+JWT_SECRET=$(openssl rand -base64 32)
+
+# In .env eintragen:
+JWT_SECRET=dein_generierter_secret_hier
+
+# Optional: Firebase für Push Notifications
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+VITE_FIREBASE_STORAGE_BUCKET=...
+VITE_FIREBASE_MESSAGING_SENDER_ID=...
+VITE_FIREBASE_APP_ID=...
+VITE_FIREBASE_VAPID_KEY=...
+
+# Optional: Sentry für Error Tracking
+VITE_SENTRY_DSN=https://...
+
+# Server Config
+PORT=3000
+NODE_ENV=production
+```
+
+**Speichern:** STRG+O, ENTER, STRG+X
+
+---
+
+## 🐳 SCHRITT 3: Docker Setup
+
+### 3.1 Dockerfile prüfen
+Das Projekt enthält bereits ein `Dockerfile`. Inhalt sollte sein:
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci --only=production
+
+COPY . .
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]
+```
+
+### 3.2 Docker Compose prüfen
+`docker-compose.yml` sollte existieren:
+
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - jt-orga-network
+
+networks:
+  jt-orga-network:
+    driver: bridge
+```
+
+### 3.3 Docker Build & Start
+```bash
+# Container bauen und starten
+docker compose up -d --build
+```
+
+### 3.4 Logs prüfen
+```bash
+# Live Logs
+docker compose logs -f
+
+# Nur letzte 50 Zeilen
+docker compose logs --tail=50
+```
+
+---
+
+## 🌐 SCHRITT 4: Domain Einrichten (Optional)
+
+### 4.1 DNS Record setzen
+Bei Hostinger oder deinem Domain Provider:
+
+```
+Type: A
+Name: @ oder subdomain
+Value: deine-vps-ip
+TTL: 3600
+```
+
+### 4.2 Warten bis DNS propagated (5-30 Min)
+```bash
+ping deine-domain.de
+```
+
+---
+
+## 🔒 SCHRITT 5: SSL/HTTPS mit Caddy (Empfohlen)
+
+### 5.1 Caddy Docker Container hinzufügen
+
+`docker-compose.yml` erweitern:
+
+```yaml
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - app
+
+  app:
+    build: .
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    networks:
+      - jt-orga-network
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  jt-orga-network:
+    driver: bridge
+```
+
+### 5.2 Caddyfile erstellen
+```bash
 nano Caddyfile
-
-# 4. Deploy
-./deploy.sh
 ```
 
-## Prerequisites
+Inhalt:
+```caddy
+deine-domain.de {
+    reverse_proxy app:3000
+}
 
-- Docker 24+
-- Docker Compose v2+
-- Domain name with DNS configured
-- Server with 1GB+ RAM, 10GB+ disk
-
-## Deployment Steps
-
-### 1. Initial Setup
-
-```bash
-# Generate secure secrets
-openssl rand -hex 32  # For JWT_SECRET
-openssl rand -base64 16  # For ADMIN_PASSWORD
-
-# Create .env file
-cp .env.production.example .env
-nano .env  # Fill in your values
+www.deine-domain.de {
+    redir https://deine-domain.de{uri}
+}
 ```
 
-### 2. Configure Domain
+**Speichern:** STRG+O, ENTER, STRG+X
 
-Edit `Caddyfile` and replace `example.com` with your domain:
-
+### 5.3 Container neu starten
 ```bash
-nano Caddyfile
-```
-
-### 3. Deploy
-
-```bash
-./deploy.sh
-```
-
-### 4. Verify
-
-```bash
-# Check container status
-docker compose ps
-
-# Check logs
-docker compose logs -f jt-orga
-
-# Test health endpoint
-curl https://your-domain.com/api/health
-```
-
-## Backup & Restore
-
-### Automated Backup
-
-```bash
-# Run backup script
-./backup.sh
-
-# Backups are stored in /opt/jt-orga-backups/
-```
-
-### Manual Database Backup
-
-```bash
-# Copy database file
-cp data/data.db backup/data_$(date +%Y%m%d).db
-
-# Or use SQLite backup command
-sqlite3 data/data.db ".backup 'backup/data_$(date +%Y%m%d).db'"
-```
-
-### Restore from Backup
-
-```bash
-# Stop application
 docker compose down
-
-# Restore database
-gunzip /opt/jt-orga-backups/data_YYYYMMDD_HHMMSS.db.gz
-sqlite3 data/data.db ".restore 'backup/data_YYYYMMDD_HHMMSS.db'"
-
-# Start application
-docker compose up -d
+docker compose up -d --build
 ```
 
-## Monitoring
-
-### Health Checks
-
-- **Basic**: `GET /api/health` - Returns OK
-- **Readiness**: `GET /api/health/ready` - Checks database connection
-- **Liveness**: `GET /api/health/live` - Process alive check
-
-### Logs
-
+### 5.4 Caddy Logs prüfen
 ```bash
-# Application logs
-docker compose logs jt-orga
-
-# Caddy logs
 docker compose logs caddy
+```
 
-# All logs
+SSL Zertifikat wird automatisch erstellt!
+
+---
+
+## 🔥 SCHRITT 6: Firewall Einrichten
+
+### 6.1 UFW installieren (falls nicht vorhanden)
+```bash
+apt install ufw -y
+```
+
+### 6.2 Firewall konfigurieren
+```bash
+# Standardmäßig alles blockieren
+ufw default deny incoming
+ufw default allow outgoing
+
+# SSH erlauben
+ufw allow 22/tcp
+
+# HTTP/HTTPS erlauben
+ufw allow 80/tcp
+ufw allow 443/tcp
+
+# Firewall aktivieren
+ufw enable
+```
+
+### 6.3 Status prüfen
+```bash
+ufw status
+```
+
+---
+
+## 📊 SCHRITT 7: Monitoring & Wartung
+
+### 7.1 Container Status prüfen
+```bash
+docker compose ps
+```
+
+### 7.2 Logs anzeigen
+```bash
+# Alle Logs
+docker compose logs
+
+# Spezifischer Service
+docker compose logs app
+
+# Live
 docker compose logs -f
 ```
 
-## Rollback
-
-### Automatic Rollback (on failed deployment)
-
-The `deploy.sh` script will automatically rollback if health checks fail.
-
-### Manual Rollback
-
+### 7.3 Resource Usage
 ```bash
-# Rollback to previous version
-./deploy.sh --rollback
+docker stats
+```
 
-# Or manually
+---
+
+## 🔄 SCHRITT 8: Updates Deployen
+
+### 8.1 Update vom Git Repository
+```bash
+cd /var/www/jt-orga
+git pull origin main
+```
+
+### 8.2 Container neu bauen & starten
+```bash
 docker compose down
-git checkout HEAD~1
+docker compose up -d --build
+```
+
+### 8.3 Alte Images aufräumen
+```bash
+docker image prune -f
+```
+
+---
+
+## 🆘 TROUBLESHOOTING
+
+### Container startet nicht
+```bash
+# Logs prüfen
+docker compose logs app
+
+# Container neu starten
+docker compose restart app
+
+# Alles neu bauen
+docker compose down
+docker compose up -d --build --force-recreate
+```
+
+### Permission Errors
+```bash
+# Rechte setzen
+chown -R 1000:1000 /var/www/jt-orga/data
+chmod -R 755 /var/www/jt-orga
+```
+
+### Port bereits belegt
+```bash
+# Belegte Ports prüfen
+netstat -tulpn | grep :3000
+
+# Anderen Port in .env setzen
+PORT=3001
+```
+
+### Database Connection Failed
+```bash
+# Data Volume prüfen
+ls -la /var/www/jt-orga/data
+
+# Rechte setzen
+chown -R 1000:1000 /var/www/jt-orga/data
+```
+
+---
+
+## 📧 NACH DEM DEPLOY
+
+### 1. App testen
+```
+http://deine-vps-ip:3000
+oder
+https://deine-domain.de
+```
+
+### 2. Admin Login
+- URL: `/login`
+- Username: `admin`
+- Passwort: (aus deiner Datenbank/Setup)
+
+### 3. Erste Schritte
+1. Admin Account erstellen
+2. Erste Aktion/Event anlegen
+3. Mitglieder einladen
+4. Push Notifications testen
+
+---
+
+## 🔐 SICHERHEITSCHECKLISTE
+
+- [ ] JWT_SECRET ist ein starker, zufälliger String
+- [ ] Firewall ist aktiv (UFW)
+- [ ] SSL/HTTPS ist eingerichtet (Caddy)
+- [ ] Regelmäßige Updates (`apt update`)
+- [ ] Docker Images aktuell halten
+- [ ] `.env` Datei ist nicht im Git
+- [ ] Database Backups einrichten
+- [ ] Logs überwachen
+
+---
+
+## 📚 NÜTZLICHE BEFEHLE
+
+```bash
+# Alle Container anzeigen
+docker ps -a
+
+# Container stoppen
+docker compose down
+
+# Container starten
 docker compose up -d
+
+# Logs ansehen
+docker compose logs -f
+
+# Resource Usage
+docker stats
+
+# Alte Images löschen
+docker image prune -a
+
+# Database Backup
+docker cp jt-orga-app-1:/app/data/jt-orga.db ./backup.db
 ```
 
-## Troubleshooting
+---
 
-### Application won't start
+## 🎉 FERTIG!
 
-```bash
-# Check logs
-docker compose logs jt-orga
+Deine JT-ORGA App läuft jetzt auf deinem Hostinger VPS in einem Docker Container!
 
-# Check if port is in use
-netstat -tlnp | grep 3000
+**Support & Hilfe:**
+- GitHub Issues: https://github.com/timhofmann27-bot/JT-Orga/issues
+- Docker Docs: https://docs.docker.com
+- Caddy Docs: https://caddyserver.com/docs
 
-# Check environment variables
-docker compose config
-```
+---
 
-### Database issues
-
-```bash
-# Check database file permissions
-ls -la data/
-
-# Verify database integrity
-sqlite3 data/data.db "PRAGMA integrity_check;"
-
-# Check database size
-du -h data/data.db
-```
-
-### SSL/TLS issues
-
-```bash
-# Check Caddy logs
-docker compose logs caddy
-
-# Verify certificate
-curl -vI https://your-domain.com
-
-# Force certificate renewal
-docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
-```
-
-## Security Checklist
-
-- [ ] `.env` file is in `.gitignore`
-- [ ] Secrets are not hardcoded
-- [ ] HTTPS is enabled (via Caddy)
-- [ ] Security headers are configured
-- [ ] Rate limiting is active
-- [ ] Backup is working
-- [ ] Health checks are responding
-- [ ] Logs are being collected
-- [ ] Firewall is configured (only 80, 443, 22)
-- [ ] SSH key authentication is enabled
-
-## Production Checklist
-
-Before going live:
-
-1. **Domain Configuration**
-   - [ ] Domain points to server IP
-   - [ ] SSL certificate is auto-provisioning
-   - [ ] DNS propagation is complete
-
-2. **Security**
-   - [ ] JWT_SECRET is secure (64 hex chars)
-   - [ ] ADMIN_PASSWORD is secure
-   - [ ] .env is not in version control
-   - [ ] Firewall allows only 80, 443, 22
-
-3. **Performance**
-   - [ ] Server has 1GB+ RAM
-   - [ ] Database backups are automated
-   - [ ] Log rotation is configured
-   - [ ] Monitoring is set up
-
-4. **Documentation**
-   - [ ] Deployment procedure is documented
-   - [ ] Rollback procedure is documented
-   - [ ] Emergency contacts are listed
-   - [ ] Backup verification schedule is set
-
-## Contact
-
-For deployment issues, check:
-1. Application logs: `docker compose logs jt-orga`
-2. Health endpoint: `curl https://your-domain.com/api/health`
-3. GitHub Issues: [https://github.com/your-username/JT-Orga/issues](https://github.com/your-username/JT-Orga/issues)
+**Viel Erfolg! 🚀**

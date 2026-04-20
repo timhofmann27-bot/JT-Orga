@@ -6,6 +6,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
+import { sendPushNotification, notifyEventUpdate, notifyNewMessage, sendBroadcastNotification } from '../services/fcmService.ts';
 
 export const apiRouter = Router();
 
@@ -140,9 +141,13 @@ const isTokenBlacklisted = (token: string): boolean => {
 
 const requireAuth = (req: any, res: any, next: any) => {
   const token = req.cookies.admin_token;
-  if (!token) return res.status(401).json({ error: 'Unauthorized' });
+  if (!token) {
+    console.warn(`[requireAuth] Missing admin_token cookie. Path: ${req.path}`);
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
 
   if (isTokenBlacklisted(token)) {
+    console.warn(`[requireAuth] Token is blacklisted. Path: ${req.path}`);
     return res.status(401).json({ error: 'Token has been revoked' });
   }
 
@@ -152,6 +157,7 @@ const requireAuth = (req: any, res: any, next: any) => {
     req.adminToken = token;
     next();
   } catch (err) {
+    console.error(`[requireAuth] Token verification failed. Error: ${err instanceof Error ? err.message : 'Unknown'}`);
     res.status(401).json({ error: 'Invalid token' });
   }
 };
@@ -311,8 +317,12 @@ const pollSchema = z.object({
   options: z.array(z.string().min(1).max(100).transform(sanitizeText)).min(2).max(10)
 });
 
+const fcmTokenSchema = z.object({
+  token: z.string().min(10)
+});
+
 const messageSchema = z.object({
-  message: z.string().min(1).max(2000).transform(sanitizeHtml)
+  message: z.string().min(1).max(2000).transform(v => sanitizeHtml(v))
 });
 
 // --- AUTH ROUTES ---
@@ -320,21 +330,25 @@ const authRouter = Router();
 authRouter.post('/login', loginLimiter, (req, res) => {
   try {
     const { username, password } = loginSchema.parse(req.body);
+    console.log(`[Login] Attempt for username: ${username}`);
     const user = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(username) as any;
 
     const genericError = 'Ungültige Anmeldedaten oder Account gesperrt.';
 
     if (!user) {
+      console.warn(`[Login] User not found: ${username}`);
       logAudit('admin', null, 'LOGIN_FAILED', { reason: 'user_not_found', username }, req.ip);
       return res.status(401).json({ error: genericError });
     }
 
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      console.warn(`[Login] Account locked for user: ${username}`);
       logAudit('admin', user.id, 'LOGIN_FAILED', { reason: 'account_locked' }, req.ip);
       return res.status(429).json({ error: genericError });
     }
 
     if (!bcrypt.compareSync(password, user.password_hash)) {
+      console.warn(`[Login] Invalid password for user: ${username}`);
       const attempts = (user.failed_login_attempts || 0) + 1;
       if (attempts >= 5) {
         const lockedUntil = new Date(Date.now() + 30 * 60000).toISOString();
@@ -349,19 +363,21 @@ authRouter.post('/login', loginLimiter, (req, res) => {
     }
 
     // Success - Reset counters
+    console.log(`[Login] Success for user: ${username}`);
     db.prepare('UPDATE admin_users SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?').run(user.id);
 
     const token = jwt.sign({ id: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'lax' : 'none',
       path: '/',
       priority: 'high'
     });
     logAudit('admin', user.id, 'LOGIN_SUCCESS', { username }, req.ip);
     res.json({ success: true });
   } catch (e) {
+    console.error(`[Login] Error: ${e instanceof Error ? e.message : 'Unknown'}`);
     res.status(400).json({ error: 'Ungültige Eingabedaten' });
   }
 });
@@ -380,14 +396,27 @@ authRouter.post('/logout', (req, res) => {
   res.clearCookie('admin_token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: isProd ? 'lax' : 'none',
     path: '/'
   });
   res.json({ success: true });
 });
 authRouter.get('/check', requireAuth, (req: any, res) => {
+  console.log(`[AuthCheck] Success for user: ${req.admin.username}`);
   res.json({ user: req.admin });
 });
+
+authRouter.post('/fcm-token', requireAuth, (req: any, res) => {
+  try {
+    const { token } = fcmTokenSchema.parse(req.body);
+    db.prepare('INSERT OR REPLACE INTO fcm_tokens (user_type, user_id, token) VALUES (?, ?, ?)')
+      .run('admin', req.admin.id, token);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: 'Ungültiger Token' });
+  }
+});
+
 apiRouter.use('/auth', authRouter);
 
 // --- ADMIN ROUTES ---
@@ -458,11 +487,26 @@ adminRouter.get('/events/:id', (req, res) => {
   if (!event) return res.status(404).json({ error: 'Event not found' });
   res.json(event);
 });
-adminRouter.put('/events/:id', (req, res) => {
+adminRouter.put('/events/:id', async (req, res) => {
   try {
     const { title, description, date, location, meeting_point, response_deadline, type } = eventSchema.parse(req.body);
+    
+    // Get existing event to check for changes
+    const existingEvent = db.prepare('SELECT * FROM events WHERE id = ?').get(req.params.id) as any;
+    if (!existingEvent) return res.status(404).json({ error: 'Event not found' });
+
+    const changes: string[] = [];
+    if (existingEvent.title !== title) changes.push(`Titel geändert zu: ${title}`);
+    if (existingEvent.date !== date) changes.push(`Datum geändert auf: ${new Date(date).toLocaleString('de-DE')}`);
+    if (existingEvent.location !== location) changes.push(`Ort geändert zu: ${location}`);
+
     const stmt = db.prepare('UPDATE events SET title = ?, description = ?, date = ?, location = ?, meeting_point = ?, response_deadline = ?, type = ? WHERE id = ?');
     stmt.run(title, description || null, date, location, meeting_point || null, response_deadline || null, type, req.params.id);
+    
+    if (changes.length > 0) {
+      await notifyEventUpdate(Number(req.params.id), changes);
+    }
+    
     res.json({ success: true });
   } catch (e: any) {
     res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
@@ -471,6 +515,22 @@ adminRouter.put('/events/:id', (req, res) => {
 adminRouter.delete('/events/:id', (req, res) => {
   db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
   res.json({ success: true });
+});
+
+adminRouter.post('/broadcast-notification', async (req, res) => {
+  try {
+    const { title, body } = z.object({
+      title: z.string().min(1).max(100).transform(sanitizeText),
+      body: z.string().min(1).max(500).transform(sanitizeText)
+    }).parse(req.body);
+
+    await sendBroadcastNotification({ title, body });
+    
+    logAudit('admin', req.admin.id, 'BROADCAST_NOTIFICATION_SENT', { title }, req.ip);
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
+  }
 });
 
 // Event Invites
@@ -571,6 +631,13 @@ adminRouter.post('/events/:id/invites', (req, res) => {
         INSERT INTO notifications (user_type, user_id, title, message, link)
         VALUES ('person', ?, ?, ?, ?)
       `).run(person_id, 'Neue Einladung', `Du wurdest zu "${event.title}" eingeladen.`, `/invite/${token}`);
+      
+      // Send Push Notification
+      sendPushNotification('person', person_id, {
+        title: 'Neue Einladung',
+        body: `Du wurdest zu "${event.title}" eingeladen.`,
+        data: { eventId: req.params.id, token }
+      }).catch(e => console.error('FCM Error:', e));
     }
 
     res.json({ id: info.lastInsertRowid, token, has_profile: !!person.password_hash });
@@ -1010,25 +1077,10 @@ adminRouter.put('/settings', (req: any, res) => {
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'lax' : 'none',
       path: '/',
       priority: 'high'
     });
-      httpOnly: true,
-      secure: true,
-      sameSite: isProd ? 'lax' : 'none'
-=======
-    logAudit('admin', req.admin.id, 'SETTINGS_UPDATED', { username }, req.ip);
-    const token = jwt.sign({ id: req.admin.id, username: username }, JWT_SECRET, { expiresIn: '1d' });
-    res.cookie('admin_token', token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      path: '/',
-      priority: 'high'
->>>>>>> 86d7fb9 (feat: Comprehensive security hardening and production deployment setup)
-    });
-
     res.json({ success: true });
   } catch (e: any) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
@@ -1148,7 +1200,7 @@ publicRouter.post('/register', (req, res) => {
     res.cookie('person_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'lax' : 'none',
       path: '/',
       priority: 'high'
     });
@@ -1200,7 +1252,7 @@ publicRouter.post('/login', loginLimiter, (req, res) => {
     res.cookie('person_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'lax' : 'none',
       path: '/',
       priority: 'high'
     });
@@ -1226,7 +1278,7 @@ publicRouter.post('/logout', (req, res) => {
   res.clearCookie('person_token', {
     httpOnly: true,
     secure: true,
-    sameSite: 'lax',
+    sameSite: isProd ? 'lax' : 'none',
     path: '/'
   });
   res.json({ success: true });
@@ -1326,6 +1378,10 @@ publicRouter.post('/invite/:token/messages', (req, res) => {
 
     const info = db.prepare('INSERT INTO event_messages (event_id, person_id, message) VALUES (?, ?, ?)').run(invitee.event_id, invitee.person_id, message);
     logAudit('person', invitee.person_id, 'EVENT_MESSAGE_SENT', { event_id: invitee.event_id, message_id: info.lastInsertRowid }, req.ip);
+    
+    // Send Push Notification asynchronously
+    notifyNewMessage(invitee.event_id, invitee.person_id, message).catch(e => console.error('FCM Error:', e));
+    
     res.json({ id: info.lastInsertRowid });
   } catch (e: any) {
     res.status(400).json({ error: e.errors?.[0]?.message || 'Ungültige Eingabedaten' });
@@ -1395,7 +1451,7 @@ publicRouter.post('/invite/:token/setup-profile', (req, res) => {
     res.cookie('person_token', token, {
       httpOnly: true,
       secure: true,
-      sameSite: 'lax',
+      sameSite: isProd ? 'lax' : 'none',
       path: '/',
       priority: 'high'
     });
@@ -1422,6 +1478,17 @@ publicRouter.put('/notifications/:id/read', requirePersonAuth, (req: any, res) =
 publicRouter.put('/notifications/read-all', requirePersonAuth, (req: any, res) => {
   db.prepare("UPDATE notifications SET is_read = 1 WHERE user_type = 'person' AND user_id = ?").run(req.person.id);
   res.json({ success: true });
+});
+
+publicRouter.post('/fcm-token', requirePersonAuth, (req: any, res) => {
+  try {
+    const { token } = fcmTokenSchema.parse(req.body);
+    db.prepare('INSERT OR REPLACE INTO fcm_tokens (user_type, user_id, token) VALUES (?, ?, ?)')
+      .run('person', req.person.id, token);
+    res.json({ success: true });
+  } catch (e) {
+    res.status(400).json({ error: 'Ungültiger Token' });
+  }
 });
 
 publicRouter.post('/invite/:token/respond', (req, res) => {

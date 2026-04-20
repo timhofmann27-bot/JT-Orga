@@ -8,35 +8,39 @@ import { apiRouter } from './src/api/index.ts';
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = 3000; // Force 3000 for AI Studio environment
 
   app.set('trust proxy', 1);
 
-  // Security headers
+  // Security headers - Modified for AI Studio iframe compatibility
   app.use(helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https://*.tile.openstreetmap.org"],
-        connectSrc: ["'self'", "https://*.sentry.io"],
-        fontSrc: ["'self'", "data:"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Eval often needed for Vite/HMR
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://*.tile.openstreetmap.org", "https://picsum.photos"],
+        connectSrc: ["'self'", "https://*.sentry.io", "wss:", "ws:"], // Allow WebSockets for Vite
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
         objectSrc: ["'none'"],
-        frameSrc: ["'none'"],
+        frameSrc: ["'self'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
+        frameAncestors: ["'self'", "*"], // Allow iframe embedding
         upgradeInsecureRequests: []
       }
     },
     crossOriginEmbedderPolicy: false,
-    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-    permissionsPolicy: {
-      camera: [],
-      microphone: [],
-      geolocation: []
-    }
+    frameguard: false, // Allow iframe embedding
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
   }));
+
+  // Separate middleware for Permissions-Policy
+  app.use((req, res, next) => {
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+  });
+
   app.disable('x-powered-by');
 
   app.use(express.json({ limit: '1mb' })); // Limit JSON payload size to prevent DoS

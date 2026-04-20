@@ -1,70 +1,7 @@
-# ============================================================================
-# .dockerignore - Exclude from Docker build context
-# ============================================================================
-
-# Dependencies
 node_modules
-.npm
-.yarn
-
-# Build output
 dist
-build
-storybook-static
-
-# Data directories
 data
-*.db
-*.db-shm
-*.db-wal
-
-# Git
 .git
-.gitignore
-
-# Environment files
 .env
-.env.local
-.env.*.local
-
-# IDE
-.vscode
-.idea
-*.swp
-*.swo
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Docker
 Dockerfile
 docker-compose.yml
-.dockerignore
-
-# CI/CD
-.github
-.gitlab-ci.yml
-
-# Documentation
-*.md
-docs
-
-# Tests
-tests
-*.test.ts
-*.spec.ts
-playwright-report
-
-# Logs
-*.log
-npm-debug.log*
-
-# Backups
-backup.sh
-backups
-
-# Misc
-.cache
-.nyc_output
-coverage

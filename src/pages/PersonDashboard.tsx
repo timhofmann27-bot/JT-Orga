@@ -330,9 +330,15 @@ export default function PersonDashboard() {
             </div>
             <div>
               <h1 className="text-4xl sm:text-5xl font-serif font-bold text-text tracking-tighter">
-                {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+                {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : (user?.username ? `, ${user.username}` : '')}
               </h1>
-              <p className="text-text-dim text-sm mt-1">Willkommen zurück auf deinem Dashboard.</p>
+              <p className="text-text-dim text-sm mt-1">
+                {upcoming.length === 1 
+                  ? 'Du hast eine kommende Aktion in den kommenden Wochen.'
+                  : upcoming.length > 1 
+                    ? `Du hast ${upcoming.length} kommende Aktionen in den kommenden Wochen.`
+                    : 'Aktuell hast du keine kommenden Aktionen.'}
+              </p>
             </div>
           </motion.div>
         </section>

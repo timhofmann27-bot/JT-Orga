@@ -1,160 +1,40 @@
-# ============================================================================
-# JT-Orga Production Docker Compose
-# Hardened, resource-limited, properly networked
-# ============================================================================
-
 services:
-  # ============================================================================
-  # Application Container
-  # ============================================================================
   jt-orga:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
     container_name: jt-orga-app
-    restart: unless-stopped
-
-    # Security: Run with non-root user
-    user: "1001:1001"
-
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-
-    # Environment
-    env_file: .env
+    expose:
+      - "3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - NODE_OPTIONS=--max-old-space-size=512
-
-    # Volumes
     volumes:
-      - app-data:/app/data
-
-    # Networks
-    networks:
-      - app-network
-
-    # Health check
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
-
-    # Logging
+      - ./data:/app/data
+    restart: always
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "5"
-        tag: "jt-orga-app"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
 
-    # Security: Read-only root filesystem (data is mounted writable)
-    read_only: true
-    tmpfs:
-      - /tmp:size=100M
-      - /var/run:size=10M
-
-    # Security: Drop all capabilities, add only needed ones
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-
-    # Security: No new privileges
-    security_opt:
-      - no-new-privileges:true
-
-    # Ports (only internal, exposed through Caddy)
-    expose:
-      - "3000"
-
-  # ============================================================================
-  # Reverse Proxy (Caddy) - Automatic HTTPS
-  # ============================================================================
   caddy:
-    image: caddy:2-alpine
+    image: caddy:latest
     container_name: caddy-proxy
-    restart: unless-stopped
-
-    # Resource limits
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
-        reservations:
-          cpus: '0.1'
-          memory: 64M
-
-    # Ports
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp"  # HTTP/3 (QUIC)
-
-    # Volumes
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: always
 
-    # Networks
-    networks:
-      - app-network
-
-    # Health check
-    healthcheck:
-      test: ["CMD", "caddy", "version"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-    # Logging
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-        tag: "caddy-proxy"
-
-    # Security: Drop capabilities
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-
-    security_opt:
-      - no-new-privileges:true
-
-# ============================================================================
-# Volumes
-# ============================================================================
 volumes:
-  app-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PWD}/data
-  caddy-data:
-  caddy-config:
-
-# ============================================================================
-# Networks
-# ============================================================================
-networks:
-  app-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
+  caddy_data:
+  caddy_config:

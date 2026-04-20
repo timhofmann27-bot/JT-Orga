@@ -10,6 +10,7 @@ import {
   Moon,
   Sun,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 import { motion } from "motion/react";
 import NotificationsMenu from "./NotificationsMenu";
@@ -63,6 +64,7 @@ export default function AdminLayout() {
     { path: "/persons", label: "Mitglieder", icon: Users },
     { path: "/registration-requests", label: "Anfragen", icon: UserPlus },
     { path: "/stats", label: "Statistik", icon: BarChart },
+    { path: "/broadcast", label: "Push-Senden", icon: MessageSquare },
     { path: "/dashboard", label: "Meine Übersicht", icon: Layout },
   ];
 

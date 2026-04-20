@@ -3,8 +3,14 @@ import * as Sentry from '@sentry/react';
 const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 export function initSentry() {
-  if (!SENTRY_DSN) {
-    console.warn('[Sentry] DSN not configured. Set VITE_SENTRY_DSN in .env');
+  const isValidDsn = SENTRY_DSN && SENTRY_DSN.startsWith('http') && SENTRY_DSN.includes('@');
+
+  if (!isValidDsn) {
+    if (SENTRY_DSN) {
+      console.warn(`[Sentry] Invalid DSN detected: "${SENTRY_DSN}". Sentry will not be initialized.`);
+    } else {
+      console.warn('[Sentry] DSN not configured. Set VITE_SENTRY_DSN in .env');
+    }
     return;
   }
 

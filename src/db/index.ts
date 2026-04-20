@@ -147,6 +147,14 @@ db.exec(`
     FOREIGN KEY (person_id) REFERENCES persons(id) ON DELETE CASCADE,
     UNIQUE(option_id, person_id)
   );
+
+  CREATE TABLE IF NOT EXISTS fcm_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_type TEXT NOT NULL, -- 'admin' or 'person'
+    user_id INTEGER NOT NULL,
+    token TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Add person_id to admin_users if it doesn't exist (migration)
