@@ -252,7 +252,7 @@ if (!adminPassword) {
 }
 
 const defaultAdmins = [
-  { username: 'admin', password: adminPassword }
+  { username: 'Tim', password: adminPassword }
 ];
 
 for (const admin of defaultAdmins) {
