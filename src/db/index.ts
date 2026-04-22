@@ -227,6 +227,10 @@ try {
   }
 }
 
+// Add Google OAuth columns (migration)
+try { db.exec('ALTER TABLE persons ADD COLUMN google_id TEXT UNIQUE'); } catch (e: any) {}
+try { db.exec('ALTER TABLE persons ADD COLUMN google_email TEXT'); } catch (e: any) {}
+
 // Create default admins if not exists
 const defaultAdmins = [
   { username: 'admin', password: process.env.ADMIN_PASSWORD || 'admin123' }
@@ -237,7 +241,6 @@ for (const admin of defaultAdmins) {
   if (!exists) {
     const hash = bcrypt.hashSync(admin.password, 10);
     db.prepare('INSERT INTO admin_users (username, password_hash) VALUES (?, ?)').run(admin.username, hash);
-    console.log(`Admin created: ${admin.username}`);
   }
 }
 

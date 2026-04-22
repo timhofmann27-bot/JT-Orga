@@ -433,7 +433,7 @@ export default function Dashboard() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-0 sm:p-6 z-[100] backdrop-blur-3xl">
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center p-4 sm:p-6 z-[100] backdrop-blur-3xl">
           <motion.div 
             initial={{ opacity: 0, y: "100%" }}
             animate={{ opacity: 1, y: 0 }}

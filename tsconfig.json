@@ -1,4 +1,5 @@
 {
+  "exclude": ["node_modules", "public", "storybook-static", "dist", "tests", "app-architecture-agent", "app-architecture-agent-workspace", "backend-api-agent", "backend-api-agent-workspace", "security-agent", "security-agent-workspace", "testing-qa-agent", "testing-qa-agent-workspace", "visual-design-agent", "visual-design-agent-workspace"],
   "compilerOptions": {
     "target": "ES2022",
     "experimentalDecorators": true,

@@ -55,7 +55,7 @@ export default function SettingsModal({ isOpen, onClose }: Props) {
         })
         .catch(() => toast.error('Fehler beim Laden der Einstellungen'));
 
-      fetch('/api/admin/check')
+      fetch('/api/auth/check')
         .then(res => res.json())
         .then(data => setCurrentUser(data.user))
         .catch(() => {});

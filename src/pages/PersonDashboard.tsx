@@ -267,17 +267,20 @@ export default function PersonDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="flex items-center gap-6 mb-4"
+            className="flex items-center justify-between gap-6 mb-4"
           >
-            <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-white/40">
-              <GreetingIcon className="w-7 h-7" />
+            <div className="flex items-center gap-6">
+              <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-white/40">
+                <GreetingIcon className="w-7 h-7" />
+              </div>
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tighter">
+                  {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+                </h1>
+                <p className="text-white/30 text-sm mt-1">Willkommen zurück auf deinem Dashboard.</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-4xl sm:text-5xl font-serif font-bold text-white tracking-tighter">
-                {getGreeting()}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-              </h1>
-              <p className="text-white/30 text-sm mt-1">Willkommen zurück auf deinem Dashboard.</p>
-            </div>
+            <NotificationsMenu apiPrefix="/api/public" />
           </motion.div>
         </section>
 

@@ -19,6 +19,60 @@ export default function Login() {
     if (typeParam === 'admin') setLoginType('admin');
   }, [searchParams]);
 
+  // Google Identity Services
+  useEffect(() => {
+    if (loginType !== 'person') return;
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      const win = window as any;
+      if (win.google?.accounts?.id) {
+        win.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleResponse,
+          auto_select: false,
+        });
+        win.google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          { theme: 'filled_black', size: 'large', width: '100%', shape: 'pill', text: 'signin_with', logo_alignment: 'center' }
+        );
+      }
+    };
+
+    return () => {
+      if (document.body.contains(script)) document.body.removeChild(script);
+    };
+  }, [loginType]);
+
+  const handleGoogleResponse = async (response: any) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/public/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      if (res.ok) {
+        toast.success('Erfolgreich angemeldet', { style: { background: '#333', color: '#fff', borderRadius: '12px' } });
+        navigate('/dashboard');
+      } else {
+        const data = await res.json();
+        toast.error(data.error || 'Google Login fehlgeschlagen', { style: { background: '#333', color: '#fff', borderRadius: '12px' } });
+      }
+    } catch (e) {
+      toast.error('Netzwerkfehler', { style: { background: '#333', color: '#fff', borderRadius: '12px' } });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -163,6 +217,12 @@ export default function Login() {
                 'Anmelden'
               )}
             </motion.button>
+
+            {loginType === 'person' && (
+              <div className="mt-6 flex justify-center">
+                <div id="google-signin-button" className="w-full max-w-xs"></div>
+              </div>
+            )}
           </form>
 
           <div className="mt-12 pt-10 border-t border-white/5 flex flex-col gap-6 text-center">

@@ -26,8 +26,6 @@ function getRating(name: string, value: number): 'good' | 'needs-improvement' | 
 export function useWebVitals(onReport?: (metric: PerformanceMetric) => void) {
   useEffect(() => {
     const reportMetric = (metric: PerformanceMetric) => {
-      console.log(`[WebVitals] ${metric.name}:`, metric);
-      
       try {
         const key = `vital_${metric.name.toLowerCase()}`;
         const data = {
@@ -76,7 +74,7 @@ export function useWebVitals(onReport?: (metric: PerformanceMetric) => void) {
     let clsValue = 0;
     const clsObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (!entry.hadRecentInput) {
+        if (!(entry as any).hadRecentInput) {
           clsValue += (entry as any).value || 0;
           reportMetric({
             name: 'CLS',
@@ -112,8 +110,6 @@ export function useWebVitals(onReport?: (metric: PerformanceMetric) => void) {
 }
 
 export function reportInteraction(name: string, duration: number) {
-  console.log(`[Interaction] ${name}: ${duration.toFixed(0)}ms`);
-  
   try {
     const key = `interaction_${name.toLowerCase().replace(/\s+/g, '_')}`;
     const data = { duration, timestamp: Date.now() };
@@ -125,7 +121,6 @@ export function reportInteraction(name: string, duration: number) {
 }
 
 export function trackPageView(page: string, duration?: number) {
-  console.log(`[PageView] ${page}${duration ? ` (${duration}ms)` : ''}`);
   
   try {
     const key = 'page_views';

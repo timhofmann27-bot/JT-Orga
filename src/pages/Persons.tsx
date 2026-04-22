@@ -315,8 +315,8 @@ export default function Members() {
         </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-6 z-50 backdrop-blur-2xl">
-          <motion.div 
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 sm:p-6 z-50 backdrop-blur-2xl">
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-surface border-t sm:border border-white/10 rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl max-w-md w-full p-8 sm:p-12 relative overflow-hidden"
@@ -376,8 +376,8 @@ export default function Members() {
       )}
 
       {showBulkModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-0 sm:p-6 z-50 backdrop-blur-2xl">
-          <motion.div 
+        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 sm:p-6 z-50 backdrop-blur-2xl">
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             className="bg-surface border-t sm:border border-white/10 rounded-t-[3rem] sm:rounded-[4rem] shadow-2xl max-w-md w-full p-8 sm:p-12 relative overflow-hidden"
