@@ -1,7 +1,12 @@
 node_modules
 dist
 data
+backups
 .git
 .env
+.env.local
 Dockerfile
+Dockerfile.dev
 docker-compose.yml
+compose.yaml
+
